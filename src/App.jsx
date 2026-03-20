@@ -1,16 +1,12 @@
+import { useState } from "react";
+import HomePage from "./components/HomePage";
+import ImportPage from "./components/ImportPage";
+
 function App() {
-  return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-5xl font-bold text-white mb-4">
-          Novo Projeto
-        </h1>
-        <p className="text-gray-400 text-lg">
-          React + Vite + TailwindCSS — Pronto para começar! 🚀
-        </p>
-      </div>
-    </div>
-  )
+  const [page, setPage] = useState("home");
+
+  if (page === "import") return <ImportPage onHome={() => setPage("home")} />;
+  return <HomePage onImport={() => setPage("import")} />;
 }
 
-export default App
+export default App;
