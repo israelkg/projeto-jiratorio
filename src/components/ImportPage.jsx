@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from "react";
-import { CloudUpload, Home, UserCircle2, CheckCircle2, FileText, X } from "lucide-react";
+import { CloudUpload, Home, UserCircle2, CheckCircle2, FileText, X, ChevronLeft } from "lucide-react";
 
-export default function ImportPage({ onHome }) {
+export default function ImportPage({ onHome, onBack }) {
   const [dragging, setDragging] = useState(false);
   const [file, setFile] = useState(null);
   const [error, setError] = useState("");
@@ -56,10 +56,20 @@ export default function ImportPage({ onHome }) {
           borderBottom: "1px solid rgba(255,255,255,0.07)",
           backdropFilter: "blur(12px)",
         }}>
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#ef4444" }} />
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#f59e0b" }} />
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#22c55e" }} />
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#ef4444" }} />
+            <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#f59e0b" }} />
+            <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#22c55e" }} />
+          </div>
+          {onBack && (
+            <button onClick={onBack} className="flex items-center gap-1.5 text-xs font-bold tracking-widest uppercase transition-all duration-200"
+              style={{ color: "rgba(255,255,255,0.4)" }}
+              onMouseEnter={e => e.currentTarget.style.color = "#c084fc"}
+              onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.4)"}>
+              <ChevronLeft size={14} /> Voltar
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-6">
           <button

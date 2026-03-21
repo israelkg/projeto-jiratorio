@@ -1,6 +1,6 @@
 import { Plus, FolderOpen, Sparkles } from "lucide-react";
 
-export default function HomePage({ onImport }) {
+export default function HomePage({ onNewSession }) {
   return (
     <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center p-6 relative overflow-hidden">
 
@@ -76,7 +76,7 @@ export default function HomePage({ onImport }) {
             label="Nova Sessão"
             gradient="linear-gradient(135deg, #7c3aed, #4f46e5)"
             glowColor="rgba(124, 58, 237, 0.4)"
-            onClick={onImport}
+            onClick={onNewSession}
           />
           <ActionButton
             icon={<FolderOpen size={32} strokeWidth={1.5} />}
