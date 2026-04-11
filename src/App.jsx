@@ -11,6 +11,11 @@ import ChooseQuestionsPage from "./components/ChooseQuestionsPage";
 import SelectPowerUpsPage from "./components/SelectPowerUpsPage";
 import LoadingPage from "./components/LoadingPage";
 import EditQuestionPage from "./components/EditQuestionPage";
+import RoundQuestionPage from "./components/RoundQuestionPage";
+import RoundFinishedPage from "./components/RoundFinishedPage";
+import RoundResultPage from "./components/RoundResultPage";
+import PowerUpsExplainPage from "./components/PowerUpsExplainPage";
+import DuoModePage from "./components/DuoModePage";
 
 function App() {
   const [page, setPage] = useState("home");
@@ -27,6 +32,11 @@ function App() {
   if (page === "selectpowerups")   return <SelectPowerUpsPage    onHome={() => go("home")} onBack={() => go("create")} />;
   if (page === "loading")          return <LoadingPage            onHome={() => go("home")} onDone={() => go("generate")} />;
   if (page === "editquestion")     return <EditQuestionPage       onHome={() => go("home")} onBack={() => go("list")} onSave={() => go("list")} onDelete={() => go("list")} />;
+  if (page === "roundquestion")    return <RoundQuestionPage      onHome={() => go("home")} onStartReading={() => {}} />;
+  if (page === "roundfinished")    return <RoundFinishedPage      onHome={() => go("home")} onActivatePowerUp={() => {}} onEditRound={() => {}} onFinishReview={() => go("home")} onNextRound={() => go("roundquestion")} />;
+  if (page === "roundresult")      return <RoundResultPage        onHome={() => go("home")} onNextRound={() => go("roundquestion")} onReplayRound={() => go("roundquestion")} />;
+  if (page === "powerupsexplain")  return <PowerUpsExplainPage   onHome={() => go("home")} onBack={() => go("create")} onSave={() => {}} />;
+  if (page === "duomode")          return <DuoModePage            onHome={() => go("home")} />;
   if (page === "create")    return (
     <CreateMatchPage
       onHome={() => go("home")}
