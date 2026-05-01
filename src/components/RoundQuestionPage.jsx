@@ -9,6 +9,7 @@ import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { Timer } from "@/features/round/components/Timer";
 import { ScoreHUD } from "@/features/round/components/ScoreHUD";
 import { PowerUpModal } from "@/features/round/components/PowerUpModal";
+import { RoleCard } from "@/features/round/components/RoleCard";
 import { useRoundStore } from "@/features/round/store/roundStore";
 import { useStudentsStore } from "@/features/students/store/studentsStore";
 import { cn } from "@/lib/utils";
@@ -237,37 +238,6 @@ export default function RoundQuestionPage({ targetScore = 1500 }) {
 
       <PowerUpModal open={puModal} onClose={() => setPuModal(false)} />
     </CRTFrame>
-  );
-}
-
-function RoleCard({ role, name, variant, Icon }) {
-  const cfg = {
-    purple: { color: "#9b59b6", suit: "♠" },
-    red:    { color: "#fe5f55", suit: "♥" },
-  }[variant];
-
-  return (
-    <Motion.div
-      initial={{ x: variant === "purple" ? -30 : 30, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 240, damping: 22 }}
-      className="rounded-xl border-4 bg-balatro-card overflow-hidden flex flex-col p-3 gap-2"
-      style={{ borderColor: cfg.color, boxShadow: `0 10px 0 #000, 0 16px 28px ${cfg.color}40` }}
-    >
-      <div className="flex items-center justify-between" style={{ color: cfg.color }}>
-        <span className="font-pixel text-[9px] tracking-[0.25em] uppercase">{role}</span>
-        <span className="font-pixel text-xl">{cfg.suit}</span>
-      </div>
-      <div
-        className="rounded-lg flex flex-col items-center justify-center py-4 gap-2"
-        style={{ background: `linear-gradient(180deg, ${cfg.color}25, ${cfg.color}05)`, color: cfg.color }}
-      >
-        <Icon size={30} />
-        <span className="font-pixel text-[10px] tracking-[0.15em] uppercase text-balatro-text">
-          {name}
-        </span>
-      </div>
-    </Motion.div>
   );
 }
 

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion as Motion } from "motion/react";
-import { Home, UserCircle2, Skull, Sparkles, Spade, Heart, Diamond, Club } from "lucide-react";
+import { Home, UserCircle2, Skull, Sparkles } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
+import { FloatingSuits } from "@/components/balatro/FloatingSuits";
 import { useQuality } from "@/features/settings/store/settingsStore";
 
 const PHASES = [
@@ -152,34 +153,5 @@ export default function LoadingPage() {
         )}
       </main>
     </CRTFrame>
-  );
-}
-
-const FLOATING_SUITS = [
-  { Comp: Spade,   color: "#f5f5f0", x: "10%", delay: 0 },
-  { Comp: Heart,   color: "#fe5f55", x: "85%", delay: 1.4 },
-  { Comp: Diamond, color: "#f0c040", x: "20%", delay: 2.8 },
-  { Comp: Club,    color: "#50c878", x: "75%", delay: 4.2 },
-];
-
-function FloatingSuits() {
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden z-[1]">
-      {FLOATING_SUITS.map((s, i) => {
-        const SIcon = s.Comp;
-        return (
-          <Motion.div
-            key={i}
-            className="absolute"
-            style={{ left: s.x, color: s.color,  }}
-            initial={{ y: "110vh", opacity: 0, rotate: 0 }}
-            animate={{ y: "-20vh", opacity: [0, 0.4, 0], rotate: 360 }}
-            transition={{ duration: 14, delay: s.delay, repeat: Infinity, ease: "linear" }}
-          >
-            <SIcon size={28} fill="currentColor" />
-          </Motion.div>
-        );
-      })}
-    </div>
   );
 }

@@ -5,6 +5,7 @@ import { Home, UserCircle2, ChevronLeft, Volume2, Skull, Dice5, ArrowRight } fro
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { useStudentsStore } from "@/features/students/store/studentsStore";
 import { useRoundStore } from "@/features/round/store/roundStore";
+import { RoleCard } from "@/features/round/components/RoleCard";
 import { pickRandom, pickWeighted } from "@/lib/random";
 
 export default function SortDrawPage() {
@@ -127,8 +128,8 @@ export default function SortDrawPage() {
         {phase === "done" && inquisitor && victim && (
           <div className="flex flex-col items-center gap-8">
             <div className="grid grid-cols-2 gap-6">
-              <RoleCard role="Inquisidor" name={inquisitor.name} variant="purple" Icon={Volume2} />
-              <RoleCard role="Vítima" name={victim.name} variant="red" Icon={Skull} />
+              <RoleCard role="Inquisidor" name={inquisitor.name} variant="purple" Icon={Volume2} size="lg" />
+              <RoleCard role="Vítima"     name={victim.name}     variant="red"    Icon={Skull}   size="lg" />
             </div>
             <Motion.button
               initial={{ y: 20, opacity: 0 }}
@@ -148,34 +149,3 @@ export default function SortDrawPage() {
   );
 }
 
-function RoleCard({ role, name, variant, Icon }) {
-  const cfg = {
-    purple: { color: "#9b59b6", suit: "♠" },
-    red:    { color: "#fe5f55", suit: "♥" },
-  }[variant];
-
-  return (
-    <Motion.div
-      initial={{ y: 60, opacity: 0, scale: 0.85, rotate: -4 }}
-      animate={{ y: 0, opacity: 1, scale: 1, rotate: 0 }}
-      transition={{ type: "spring", stiffness: 240, damping: 20 }}
-      className="rounded-2xl border-4 bg-balatro-card overflow-hidden flex flex-col items-center p-4 gap-2 w-44 h-60"
-      style={{ borderColor: cfg.color, boxShadow: `0 14px 0 #000, 0 22px 36px ${cfg.color}55` }}
-    >
-      <div className="flex items-start justify-between w-full" style={{ color: cfg.color }}>
-        <span className="font-pixel text-base">{cfg.suit}</span>
-        <span className="font-pixel text-[8px] tracking-[0.2em] uppercase">{role}</span>
-        <span className="font-pixel text-base rotate-180">{cfg.suit}</span>
-      </div>
-      <div
-        className="flex-1 w-full rounded-lg flex items-center justify-center"
-        style={{ background: `linear-gradient(180deg, ${cfg.color}30, ${cfg.color}10)`, color: cfg.color }}
-      >
-        <Icon size={48} />
-      </div>
-      <span className="font-pixel text-xs tracking-[0.15em] uppercase text-balatro-text">
-        {name}
-      </span>
-    </Motion.div>
-  );
-}
