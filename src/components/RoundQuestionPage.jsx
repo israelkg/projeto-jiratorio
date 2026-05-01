@@ -10,9 +10,10 @@ import { Timer } from "@/features/round/components/Timer";
 import { ScoreHUD } from "@/features/round/components/ScoreHUD";
 import { PowerUpModal } from "@/features/round/components/PowerUpModal";
 import { RoleCard } from "@/features/round/components/RoleCard";
+import { QuestionCardCorner } from "@/features/round/components/QuestionCardCorner";
+import { ActionButton } from "@/features/round/components/ActionButton";
 import { useRoundStore } from "@/features/round/store/roundStore";
 import { useStudentsStore } from "@/features/students/store/studentsStore";
-import { cn } from "@/lib/utils";
 
 const DEMO_QUESTIONS = {
   1: { text: "Em que ano foi assinada a Declaração de Independência dos Estados Unidos?", answer: "1776" },
@@ -130,11 +131,11 @@ export default function RoundQuestionPage({ targetScore = 1500 }) {
             style={{ boxShadow: "0 14px 0 #000, 0 20px 40px rgba(220,38,38,0.4), inset 0 0 60px rgba(254,95,85,0.15)" }}
           >
             <div className="flex items-start justify-between p-3 pb-0 text-balatro-red">
-              <CornerSuit letter="Q" />
+              <QuestionCardCorner letter="Q" />
               <span className="font-pixel text-[8px] tracking-[0.3em] text-balatro-text-dim uppercase">
                 Pergunta · #{String(questionId ?? 1).padStart(3, "0")}
               </span>
-              <CornerSuit letter="Q" flip />
+              <QuestionCardCorner letter="Q" flip />
             </div>
             <div className="px-6 py-6 flex flex-col items-center gap-4">
               <Spade size={140} className="absolute opacity-[0.04] text-balatro-red pointer-events-none" style={{ top: "50%", left: "50%", transform: "translate(-50%,-50%)" }} fill="currentColor" />
@@ -156,14 +157,14 @@ export default function RoundQuestionPage({ targetScore = 1500 }) {
               </AnimatePresence>
             </div>
             <div className="flex items-end justify-between p-3 pt-0 text-balatro-red">
-              <CornerSuit letter="Q" flip />
+              <QuestionCardCorner letter="Q" flip />
               <div className="flex gap-2 opacity-60">
                 <Spade size={12} fill="currentColor" />
                 <Heart size={12} fill="currentColor" />
                 <Diamond size={12} fill="currentColor" />
                 <Club size={12} fill="currentColor" />
               </div>
-              <CornerSuit letter="Q" />
+              <QuestionCardCorner letter="Q" />
             </div>
             <AnimatePresence>
               {reading && (
@@ -192,8 +193,8 @@ export default function RoundQuestionPage({ targetScore = 1500 }) {
 
           {reading && !result && (
             <div className="grid grid-cols-2 gap-3 w-full max-w-md">
-              <ActionBtn onClick={handleCorrect} color="#50c878" Icon={Check} label="Acertou" />
-              <ActionBtn onClick={handleWrong} color="#fe5f55" Icon={X} label="Errou" />
+              <ActionButton onClick={handleCorrect} color="#50c878" Icon={Check} label="Acertou" />
+              <ActionButton onClick={handleWrong} color="#fe5f55" Icon={X} label="Errou" />
             </div>
           )}
 
@@ -203,9 +204,9 @@ export default function RoundQuestionPage({ targetScore = 1500 }) {
               animate={{ y: 0, opacity: 1 }}
               className="grid grid-cols-3 gap-2 w-full max-w-lg"
             >
-              <ActionBtn onClick={handlePass} color="#f0c040" Icon={ArrowRight} label="Repassar" />
-              <ActionBtn onClick={toggleAnswer} color="#009dff" Icon={Eye} label={showAnswer ? "Ocultar" : "Revelar"} />
-              <ActionBtn onClick={() => navigate("/round-finished")} color="#9b59b6" Icon={Check} label="Finalizar" />
+              <ActionButton onClick={handlePass} color="#f0c040" Icon={ArrowRight} label="Repassar" />
+              <ActionButton onClick={toggleAnswer} color="#009dff" Icon={Eye} label={showAnswer ? "Ocultar" : "Revelar"} />
+              <ActionButton onClick={() => navigate("/round-finished")} color="#9b59b6" Icon={Check} label="Finalizar" />
             </Motion.div>
           )}
 
@@ -238,34 +239,5 @@ export default function RoundQuestionPage({ targetScore = 1500 }) {
 
       <PowerUpModal open={puModal} onClose={() => setPuModal(false)} />
     </CRTFrame>
-  );
-}
-
-function CornerSuit({ letter, flip = false }) {
-  return (
-    <div className={cn("flex flex-col items-center leading-none", flip && "rotate-180")}>
-      <span className="font-pixel text-sm">{letter}</span>
-      <Spade size={12} fill="currentColor" />
-    </div>
-  );
-}
-
-function ActionBtn({ onClick, color, Icon, label }) {
-  return (
-    <Motion.button
-      type="button"
-      onClick={onClick}
-      whileHover={{ y: -2, scale: 1.04 }}
-      whileTap={{ y: 2, scale: 0.96 }}
-      className="px-4 py-3 rounded-xl border-b-4 font-pixel text-[10px] tracking-[0.2em] uppercase flex items-center justify-center gap-2"
-      style={{
-        background: color,
-        color: color === "#f0c040" ? "#0a0a1a" : "#fff",
-        borderColor: "rgba(0,0,0,0.5)",
-      }}
-    >
-      <Icon size={14} />
-      {label}
-    </Motion.button>
   );
 }

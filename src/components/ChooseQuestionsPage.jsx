@@ -6,6 +6,7 @@ import {
   LayoutList, CheckSquare, Square, Spade, Heart, Diamond, Club,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
+import { QuestionItem } from "@/features/questions/components/QuestionItem";
 
 import { cn } from "@/lib/utils";
 
@@ -133,96 +134,22 @@ export default function ChooseQuestionsPage() {
 
         {/* Questions hand */}
         <div className="w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {questions.map((q, i) => {
-            const isSelected = selected.has(q.id);
-            const isEditing = editingId === q.id;
-            const suitCfg = SUITS[q.suit];
-            const SuitIcon = suitCfg.Icon;
-            return (
-              <Motion.button
-                key={q.id}
-                type="button"
-                role="checkbox"
-                aria-checked={isSelected}
-                aria-label={`Pergunta ${q.id}: ${q.text}`}
-                onClick={() => !isEditing && toggleSelect(q.id)}
-                initial={{ y: 60, opacity: 0, rotate: -2 }}
-                animate={{ y: 0, opacity: 1, rotate: 0 }}
-                transition={{ delay: 0.15 + i * 0.05, type: "spring", stiffness: 220, damping: 20 }}
-                whileHover={!isEditing && { y: -8, rotate: i % 2 === 0 ? -1 : 1, scale: 1.02 }}
-                className={cn(
-                  "relative cursor-pointer text-left rounded-xl border-4 bg-balatro-card overflow-hidden flex flex-col p-3 gap-2 min-h-[200px] transition-shadow focus-visible:outline-2 focus-visible:outline-balatro-gold focus-visible:outline-offset-2",
-                  isSelected ? "border-balatro-gold" : "border-balatro-card-edge",
-                )}
-                style={{
-                  boxShadow: isSelected
-                    ? "0 14px 0 #000, 0 22px 36px rgba(240,192,64,0.4)"
-                    : "0 8px 0 #000, 0 16px 28px rgba(0,0,0,0.6)",
-                }}
-              >
-                {/* Top corner */}
-                <div className="flex items-start justify-between" style={{ color: suitCfg.color }}>
-                  <div className="flex flex-col items-center leading-none">
-                    <span className="font-pixel text-base">{q.rank}</span>
-                    <SuitIcon size={14} fill="currentColor" />
-                  </div>
-                  {isSelected && (
-                    <div className="w-6 h-6 rounded-full bg-balatro-gold border-2 border-yellow-700 flex items-center justify-center">
-                      <Check size={14} className="text-balatro-bg-deep" strokeWidth={3} />
-                    </div>
-                  )}
-                </div>
-
-                {/* Body */}
-                {isEditing ? (
-                  <textarea
-                    autoFocus
-                    value={editText}
-                    onChange={(e) => setEditText(e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                    className="flex-1 bg-balatro-bg-deep/60 border-2 border-balatro-purple rounded-md p-2 text-xs text-balatro-text resize-none font-mono outline-none"
-                  />
-                ) : (
-                  <p className="flex-1 text-[12px] leading-snug text-balatro-text-dim">
-                    {q.text}
-                  </p>
-                )}
-
-                {/* Footer */}
-                {isEditing ? (
-                  <div className="flex gap-1.5">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); saveEdit(); }}
-                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md bg-balatro-green text-white font-pixel text-[8px] tracking-wider"
-                    >
-                      <Check size={12} /> SALVAR
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setEditingId(null); }}
-                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md bg-balatro-card-edge text-balatro-text font-pixel text-[8px] tracking-wider"
-                    >
-                      <X size={12} /> CANCEL
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); startEdit(q); }}
-                    className="flex items-center justify-center gap-1 py-1 rounded-md border border-balatro-card-edge text-balatro-text-dim hover:text-balatro-text hover:border-balatro-purple font-pixel text-[8px] tracking-wider transition-colors"
-                  >
-                    <Pencil size={10} /> EDITAR
-                  </button>
-                )}
-
-                {/* Bottom corner (rotated) */}
-                <div className="flex items-end justify-between rotate-180" style={{ color: suitCfg.color }}>
-                  <div className="flex flex-col items-center leading-none">
-                    <span className="font-pixel text-base">{q.rank}</span>
-                    <SuitIcon size={14} fill="currentColor" />
-                  </div>
-                </div>
-              </Motion.button>
-            );
-          })}
+          {questions.map((q, i) => (
+            <QuestionItem
+              key={q.id}
+              question={q}
+              index={i}
+              suitConfig={SUITS[q.suit]}
+              isSelected={selected.has(q.id)}
+              isEditing={editingId === q.id}
+              editText={editText}
+              onToggle={toggleSelect}
+              onStartEdit={startEdit}
+              onSaveEdit={saveEdit}
+              onCancelEdit={() => setEditingId(null)}
+              onChangeEditText={setEditText}
+            />
+          ))}
         </div>
 
         {/* Confirm button */}

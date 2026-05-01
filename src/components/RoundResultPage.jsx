@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion as Motion } from "motion/react";
-import {
-  Home, UserCircle2, Crown, Trophy, ChevronRight, RotateCcw,
-  TrendingUp, TrendingDown, Minus,
-} from "lucide-react";
+import { Home, UserCircle2, Trophy, ChevronRight, RotateCcw } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { FloatingSuits } from "@/components/balatro/FloatingSuits";
 import { BalatroButton } from "@/components/balatro/BalatroButton";
-
+import { PodiumCard } from "@/features/round/components/result/PodiumCard";
+import { PlayerRow } from "@/features/round/components/result/PlayerRow";
 import { cn } from "@/lib/utils";
 
 const DEMO_PLAYERS = [
@@ -18,18 +16,6 @@ const DEMO_PLAYERS = [
   { id: 4, name: "FULANO 4", totalPoints: 7,  roundPoints: 0, avatar: "F4", trend: "same", chips: 140, mult: 2 },
   { id: 5, name: "FULANO 5", totalPoints: 4,  roundPoints: 1, avatar: "F5", trend: "up",   chips: 100, mult: 1 },
 ];
-
-const PODIUM = {
-  1: { color: "#f0c040", glow: "0 0 32px rgba(240,192,64,0.6)", suit: "♠", height: "h-44", crown: true,  label: "1ST" },
-  2: { color: "#cbd5e1", glow: "0 0 24px rgba(203,213,225,0.4)", suit: "♥", height: "h-32", crown: false, label: "2ND" },
-  3: { color: "#fb923c", glow: "0 0 24px rgba(251,146,60,0.4)",  suit: "♦", height: "h-24", crown: false, label: "3RD" },
-};
-
-const TREND = {
-  up:   { Icon: TrendingUp,   color: "#50c878" },
-  down: { Icon: TrendingDown, color: "#fe5f55" },
-  same: { Icon: Minus,        color: "rgba(255,255,255,0.3)" },
-};
 
 function RollingNumber({ value, duration = 1200, className }) {
   const [display, setDisplay] = useState(0);
@@ -61,9 +47,7 @@ export default function RoundResultPage({
   const winner = sorted[0];
 
   return (
-    <CRTFrame className="bg-balatro-bg-deep">
-      
-
+    <CRTFrame>
       <nav className="relative z-10 flex items-center justify-between px-8 py-4 border-b-2 border-balatro-card-edge bg-black/40 backdrop-blur-md">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-balatro-red" />
@@ -77,14 +61,13 @@ export default function RoundResultPage({
           <button onClick={onHome} className="font-pixel text-[10px] tracking-[0.3em] uppercase text-balatro-text-dim hover:text-balatro-gold transition-colors flex items-center gap-2">
             <Home size={14} /> Home
           </button>
-          <button className="text-balatro-text-dim hover:text-balatro-gold transition-colors">
+          <button aria-label="Perfil" className="text-balatro-text-dim hover:text-balatro-gold transition-colors">
             <UserCircle2 size={26} />
           </button>
         </div>
       </nav>
 
       <main className="relative z-10 flex-1 flex flex-col items-center px-6 py-8 gap-10 overflow-y-auto">
-        {/* Title */}
         <Motion.div
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -94,8 +77,10 @@ export default function RoundResultPage({
           <p className="font-pixel text-[10px] tracking-[0.4em] text-balatro-gold text-glow-gold uppercase">
             ◆ Cashed Out ◆
           </p>
-          <h1 className="font-pixel text-3xl md:text-5xl text-balatro-text leading-tight"
-              style={{ filter: "drop-shadow(0 0 14px rgba(240,192,64,0.6))" }}>
+          <h1
+            className="font-pixel text-3xl md:text-5xl text-balatro-text leading-tight"
+            style={{ filter: "drop-shadow(0 0 14px rgba(240,192,64,0.6))" }}
+          >
             ROUND WIN
           </h1>
         </Motion.div>
@@ -128,54 +113,14 @@ export default function RoundResultPage({
 
         {/* Podium */}
         <div className="w-full max-w-2xl flex items-end justify-center gap-4">
-          {[1, 0, 2].map((rankIdx, visualIdx) => {
-            const player = sorted[rankIdx];
-            const rank = rankIdx + 1;
-            const cfg = PODIUM[rank];
-            if (!player) return null;
-            return (
-              <Motion.div
-                key={player.id}
-                initial={{ y: 100, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5 + visualIdx * 0.15, type: "spring", stiffness: 220, damping: 18 }}
-                className="flex flex-col items-center gap-2 flex-1 max-w-[180px]"
-              >
-                {cfg.crown && <Motion.div animate={{ y: [0, -4, 0] }} transition={{ duration: 2, repeat: Infinity }}><Crown size={32} fill={cfg.color} className="text-balatro-gold" style={{ filter: `drop-shadow(${cfg.glow})` }} /></Motion.div>}
-
-                {/* Player card */}
-                <div
-                  className="relative w-full rounded-xl border-4 bg-balatro-card overflow-hidden flex flex-col items-center p-3 gap-2"
-                  style={{ borderColor: cfg.color, boxShadow: `0 10px 0 #000, 0 16px 28px rgba(0,0,0,0.7), ${cfg.glow}` }}
-                >
-                  <span className="absolute top-2 left-2 font-pixel text-base" style={{ color: cfg.color }}>{cfg.suit}</span>
-                  <span className="absolute bottom-2 right-2 font-pixel text-base rotate-180" style={{ color: cfg.color }}>{cfg.suit}</span>
-
-                  <div
-                    className="w-14 h-14 rounded-full flex items-center justify-center font-pixel text-base text-balatro-bg-deep border-4"
-                    style={{ background: cfg.color, borderColor: cfg.color }}
-                  >
-                    {player.avatar}
-                  </div>
-                  <span className="font-pixel text-[9px] tracking-[0.2em] uppercase text-balatro-text truncate w-full text-center">
-                    {player.name}
-                  </span>
-                  <span className="font-pixel text-xl tabular-nums" style={{ color: cfg.color, textShadow: `0 0 12px ${cfg.color}` }}>
-                    {player.totalPoints}
-                    <span className="text-[8px] text-balatro-text-dim ml-1">pts</span>
-                  </span>
-                </div>
-
-                {/* Podium block */}
-                <div
-                  className={cn("w-full rounded-t-xl flex items-center justify-center font-pixel text-3xl text-balatro-bg-deep border-x-4 border-t-4", cfg.height)}
-                  style={{ background: cfg.color, borderColor: cfg.color, boxShadow: `0 -6px 24px ${cfg.color}66` }}
-                >
-                  {cfg.label}
-                </div>
-              </Motion.div>
-            );
-          })}
+          {[1, 0, 2].map((rankIdx, visualIdx) => (
+            <PodiumCard
+              key={sorted[rankIdx]?.id ?? rankIdx}
+              player={sorted[rankIdx]}
+              rank={rankIdx + 1}
+              visualIdx={visualIdx}
+            />
+          ))}
         </div>
 
         {/* Leaderboard */}
@@ -188,7 +133,9 @@ export default function RoundResultPage({
         >
           <div className="flex items-center gap-2 px-5 py-3 border-b-2 border-balatro-card-edge bg-black/30">
             <Trophy size={14} className="text-balatro-gold" />
-            <span className="font-pixel text-[10px] tracking-[0.3em] text-balatro-gold text-glow-gold uppercase">Leaderboard</span>
+            <span className="font-pixel text-[10px] tracking-[0.3em] text-balatro-gold text-glow-gold uppercase">
+              Leaderboard
+            </span>
           </div>
 
           <div
@@ -202,64 +149,19 @@ export default function RoundResultPage({
             ))}
           </div>
 
-          {sorted.map((player, idx) => {
-            const trend = TREND[player.trend] ?? TREND.same;
-            const TrendIcon = trend.Icon;
-            const isTop3 = idx < 3;
-            const podiumColor = isTop3 ? PODIUM[idx + 1].color : "rgba(255,255,255,0.4)";
-
-            return (
-              <Motion.div
-                key={player.id}
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 1.1 + idx * 0.06 }}
-                className={cn(
-                  "grid items-center gap-2 px-5 py-3 hover:bg-white/5 transition-colors",
-                  idx < sorted.length - 1 && "border-b border-balatro-card-edge/40",
-                )}
-                style={{ gridTemplateColumns: "2.5rem 1fr 5rem 5rem" }}
-              >
-                <span className="font-pixel text-sm tabular-nums" style={{ color: podiumColor, textShadow: isTop3 ? `0 0 8px ${podiumColor}` : "none" }}>
-                  {idx + 1}
-                </span>
-                <div className="flex items-center gap-2 min-w-0">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center font-pixel text-[10px] flex-shrink-0 border-2"
-                    style={{
-                      background: isTop3 ? podiumColor : "rgba(255,255,255,0.08)",
-                      color: isTop3 ? "#0a0a1a" : "rgba(255,255,255,0.7)",
-                      borderColor: isTop3 ? podiumColor : "rgba(255,255,255,0.15)",
-                    }}
-                  >
-                    {player.avatar}
-                  </div>
-                  <span className="font-pixel text-[10px] tracking-[0.15em] uppercase text-balatro-text truncate">
-                    {player.name}
-                  </span>
-                  <TrendIcon size={12} style={{ color: trend.color, flexShrink: 0 }} />
-                </div>
-                <span
-                  className={cn(
-                    "font-pixel text-xs tabular-nums",
-                    player.roundPoints > 0 ? "text-balatro-green" : "text-balatro-text-dim",
-                  )}
-                >
-                  {player.roundPoints > 0 ? `+${player.roundPoints}` : "—"}
-                </span>
-                <span className="font-pixel text-xs tabular-nums text-balatro-text">
-                  <RollingNumber value={player.totalPoints} duration={900} />
-                  <span className="text-[8px] text-balatro-text-dim ml-1">pts</span>
-                </span>
-              </Motion.div>
-            );
-          })}
+          {sorted.map((player, idx) => (
+            <PlayerRow
+              key={player.id}
+              player={player}
+              idx={idx}
+              total={sorted.length}
+              RollingNumber={RollingNumber}
+            />
+          ))}
         </Motion.div>
 
-        {/* Floating decorative suits */}
         <FloatingSuits />
 
-        {/* Actions */}
         <Motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -279,4 +181,3 @@ export default function RoundResultPage({
     </CRTFrame>
   );
 }
-
