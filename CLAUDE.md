@@ -29,28 +29,58 @@ Path alias: `@/` → `src/` (configurado em [vite.config.js](vite.config.js) e [
 ## Comandos
 
 ```bash
-npm run dev       # Vite dev server com HMR
-npm run build     # build de produção
-npm run preview   # serve o build local
-npm run lint      # ESLint em todo o projeto
+npm run dev         # Vite dev server com HMR
+npm run build       # build de produção
+npm run preview     # serve o build local
+npm run lint        # ESLint em todo o projeto
+npm test            # rodar testes (vitest run)
+npm run test:watch  # vitest em modo watch
+npm run test:ui     # vitest UI no browser
 ```
 
-Não há script de testes configurado ainda. Se for adicionar, padronize com Vitest + React Testing Library (combina com Vite, mesma stack).
+Vitest + Testing Library configurados. Setup em [src/test/setup.js](src/test/setup.js). Testes ficam ao lado do código (`*.test.js` no mesmo diretório do módulo testado).
 
 ## Estrutura atual
 
 ```
 src/
-├── App.jsx              # roteamento manual via useState (refatorar p/ react-router)
+├── App.jsx              # apenas <AppProviders />
 ├── main.jsx             # entrypoint, StrictMode
-├── index.css            # Tailwind v4 + tokens shadcn
+├── index.css            # Tailwind v4 + tokens Balatro + utilities CRT
 ├── App.css
 ├── assets/              # imagens estáticas
+├── app/                 # bootstrap
+│   ├── providers.jsx    # QueryClientProvider + RouterProvider
+│   ├── router.jsx       # createBrowserRouter + lazy + ROUTES
+│   ├── Layout.jsx       # Outlet + BalatroBackground compartilhado + DevNav
+│   └── queryClient.js   # TanStack Query config
+├── pages/               # 24 rotas *Page.jsx (lazy)
 ├── components/
-│   ├── *Page.jsx        # páginas (todas no mesmo nível — reorganizar)
-│   └── ui/              # primitivos shadcn (apenas button.jsx por enquanto)
-└── lib/
-    └── utils.js         # cn() — clsx + tailwind-merge
+│   ├── balatro/         # CRTFrame, BalatroBackground, BalatroCard,
+│   │                    # BalatroButton, ScoreCounter, FloatingSuits
+│   ├── dev/             # DevNav (atalhos QA em DEV)
+│   └── ui/              # button + button-variants (shadcn)
+├── features/
+│   ├── questions/
+│   │   ├── components/  # QuestionItem
+│   │   └── schema.js    # zod
+│   ├── round/
+│   │   ├── components/  # Timer, ScoreHUD, PowerUpModal, RoleCard,
+│   │   │                # QuestionCardCorner, ActionButton
+│   │   ├── components/duo/    # TeamCard, ActionFeed
+│   │   ├── components/result/ # PodiumCard, PlayerRow, podiumConfig
+│   │   └── store/       # roundStore
+│   ├── settings/store/  # settingsStore (qualidade gráfica)
+│   └── students/
+│       ├── store/       # studentsStore
+│       └── schema.js    # zod (CSV import)
+├── lib/
+│   ├── api.js           # axios instance + interceptors
+│   ├── random.js        # pickRandom + pickWeighted
+│   ├── suits.js         # SUIT_CONFIG compartilhado
+│   └── utils.js         # cn() — clsx + tailwind-merge
+└── test/
+    └── setup.js         # vitest + jest-dom + matchMedia mock
 ```
 
 ## Estrutura alvo (a evoluir conforme o projeto cresce)
