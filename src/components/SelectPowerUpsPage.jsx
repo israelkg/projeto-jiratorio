@@ -6,6 +6,7 @@ import {
   RefreshCw, SkipForward, Users, Hand, Eye, Clock, Shuffle, Shield,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
+import { BalatroButton } from "@/components/balatro/BalatroButton";
 
 import { cn } from "@/lib/utils";
 
@@ -156,22 +157,13 @@ export default function SelectPowerUpsPage() {
           })}
         </div>
 
-        <Motion.button
+        <BalatroButton
           onClick={handleSave}
-          whileHover={{ y: -3, scale: 1.03 }}
-          whileTap={{ y: 2, scale: 0.98 }}
           disabled={enabled.size === 0}
-          className={cn(
-            "px-12 py-4 rounded-2xl font-pixel text-sm tracking-[0.25em] uppercase border-b-4 flex items-center gap-3",
-            saved
-              ? "bg-balatro-green text-white border-green-900"
-              : enabled.size === 0
-                ? "bg-balatro-card-edge text-balatro-text-dim border-black opacity-50 cursor-not-allowed"
-                : "bg-balatro-gold text-balatro-bg-deep border-yellow-800 hover:shadow-balatro-glow-gold",
-          )}
+          variant={saved ? "green" : "gold"}
         >
           {saved ? <><Check size={18} /> Salvo!</> : <><Zap size={18} /> Confirmar Seleção</>}
-        </Motion.button>
+        </BalatroButton>
       </main>
     </CRTFrame>
   );

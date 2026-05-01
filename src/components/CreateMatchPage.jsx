@@ -7,6 +7,7 @@ import {
   PlayCircle, ChevronRight, Spade,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
+import { BalatroButton } from "@/components/balatro/BalatroButton";
 
 import { cn } from "@/lib/utils";
 
@@ -93,20 +94,15 @@ export default function CreateMatchPage() {
           </div>
         </Motion.div>
 
-        <Motion.button
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          whileHover={{ y: -4, scale: 1.03 }}
-          whileTap={{ y: 2, scale: 0.98 }}
+        <BalatroButton
+          variant="red"
           onClick={() => navigate(mode === "dupla" ? "/duo-mode" : "/sort-draw")}
-          className="group relative px-12 py-5 rounded-2xl bg-balatro-red text-white font-pixel text-sm tracking-[0.3em] uppercase border-b-4 border-red-950 hover:shadow-balatro-glow-red flex items-center gap-3"
         >
           <Spade size={18} fill="currentColor" />
           <PlayCircle size={20} />
           Iniciar Partida
           <Spade size={18} fill="currentColor" />
-        </Motion.button>
+        </BalatroButton>
       </main>
     </CRTFrame>
   );

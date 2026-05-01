@@ -5,6 +5,7 @@ import {
   Home, UserCircle2, ChevronLeft, HelpCircle, Check, Spade, Heart, Diamond, Club,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
+import { BalatroButton } from "@/components/balatro/BalatroButton";
 import { cn } from "@/lib/utils";
 
 const COUNT_OPTIONS = [
@@ -129,19 +130,9 @@ export default function QuestionCountPage() {
           })}
         </div>
 
-        <Motion.button
-          onClick={handleSave}
-          whileHover={{ y: -3, scale: 1.03 }}
-          whileTap={{ y: 2, scale: 0.98 }}
-          className={cn(
-            "px-12 py-4 rounded-2xl font-pixel text-sm tracking-[0.25em] uppercase border-b-4 flex items-center gap-3",
-            saved
-              ? "bg-balatro-green text-white border-green-900"
-              : "bg-balatro-blue text-white border-blue-950 hover:shadow-balatro-glow-blue",
-          )}
-        >
+        <BalatroButton onClick={handleSave} variant={saved ? "green" : "blue"}>
           {saved ? <><Check size={18} /> Salvo!</> : <><HelpCircle size={18} /> Salvar — {selected}</>}
-        </Motion.button>
+        </BalatroButton>
       </main>
     </CRTFrame>
   );

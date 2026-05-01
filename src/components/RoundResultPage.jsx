@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { FloatingSuits } from "@/components/balatro/FloatingSuits";
+import { BalatroButton } from "@/components/balatro/BalatroButton";
 
 import { cn } from "@/lib/utils";
 
@@ -265,24 +266,14 @@ export default function RoundResultPage({
           transition={{ delay: 1.5 }}
           className="w-full max-w-2xl grid grid-cols-2 gap-4 pb-4"
         >
-          <Motion.button
-            onClick={onReplayRound}
-            whileHover={{ y: -2, scale: 1.02 }}
-            whileTap={{ y: 2, scale: 0.98 }}
-            className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-balatro-card text-balatro-text font-pixel text-[11px] tracking-[0.25em] uppercase border-b-4 border-black hover:bg-balatro-card-edge"
-          >
+          <BalatroButton onClick={onReplayRound} variant="ghost" size="md">
             <RotateCcw size={14} />
             Repetir
-          </Motion.button>
-          <Motion.button
-            onClick={onNextRound}
-            whileHover={{ y: -2, scale: 1.02 }}
-            whileTap={{ y: 2, scale: 0.98 }}
-            className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-balatro-gold text-balatro-bg-deep font-pixel text-[11px] tracking-[0.25em] uppercase border-b-4 border-yellow-800 hover:shadow-balatro-glow-gold"
-          >
+          </BalatroButton>
+          <BalatroButton onClick={onNextRound} variant="gold" size="md">
             <ChevronRight size={14} />
             Próxima Rodada
-          </Motion.button>
+          </BalatroButton>
         </Motion.div>
       </main>
     </CRTFrame>

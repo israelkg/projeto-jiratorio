@@ -5,6 +5,7 @@ import {
   Home, UserCircle2, ChevronLeft, Package, Check, Clock, Layers, Power,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
+import { BalatroButton } from "@/components/balatro/BalatroButton";
 
 import { cn } from "@/lib/utils";
 
@@ -175,19 +176,9 @@ export default function InventoryPage() {
           </Motion.div>
         </div>
 
-        <Motion.button
-          onClick={handleSave}
-          whileHover={{ y: -3, scale: 1.03 }}
-          whileTap={{ y: 2, scale: 0.98 }}
-          className={cn(
-            "px-12 py-4 rounded-2xl font-pixel text-sm tracking-[0.25em] uppercase border-b-4 flex items-center gap-3",
-            saved
-              ? "bg-balatro-green text-white border-green-900"
-              : "bg-balatro-purple text-white border-purple-950 hover:shadow-[0_0_32px_rgba(155,89,182,0.6)]",
-          )}
-        >
+        <BalatroButton onClick={handleSave} variant={saved ? "green" : "purple"}>
           {saved ? <><Check size={18} /> Salvo!</> : <><Package size={18} /> Salvar Inventário</>}
-        </Motion.button>
+        </BalatroButton>
       </main>
     </CRTFrame>
   );

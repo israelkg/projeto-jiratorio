@@ -5,6 +5,7 @@ import {
   Home, UserCircle2, ChevronLeft, Zap, Shield, Clock, Eye, Shuffle, Check,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
+import { BalatroButton } from "@/components/balatro/BalatroButton";
 
 import { cn } from "@/lib/utils";
 
@@ -155,22 +156,13 @@ export default function PowerUpsPage() {
           })}
         </div>
 
-        <Motion.button
+        <BalatroButton
           onClick={() => isValid && setSaved(true)}
-          whileHover={isValid && { y: -3, scale: 1.03 }}
-          whileTap={isValid && { y: 2, scale: 0.98 }}
           disabled={!isValid}
-          className={cn(
-            "px-12 py-4 rounded-2xl font-pixel text-sm tracking-[0.25em] uppercase border-b-4 flex items-center gap-3",
-            saved
-              ? "bg-balatro-green text-white border-green-900"
-              : !isValid
-                ? "bg-balatro-card-edge text-balatro-text-dim border-black opacity-50 cursor-not-allowed"
-                : "bg-balatro-gold text-balatro-bg-deep border-yellow-800 hover:shadow-balatro-glow-gold",
-          )}
+          variant={saved ? "green" : "gold"}
         >
           {saved ? <><Check size={18} /> Salvo!</> : <><Zap size={18} /> Salvar Power-Ups</>}
-        </Motion.button>
+        </BalatroButton>
       </main>
     </CRTFrame>
   );

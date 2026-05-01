@@ -5,6 +5,7 @@ import {
   CloudUpload, Home, UserCircle2, CheckCircle2, FileText, X, ChevronLeft, Users,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
+import { BalatroButton } from "@/components/balatro/BalatroButton";
 import { cn } from "@/lib/utils";
 
 export default function ImportPage() {
@@ -164,20 +165,9 @@ export default function ImportPage() {
           </Motion.div>
         )}
 
-        <Motion.button
-          onClick={onBack}
-          disabled={!file}
-          whileHover={file && { y: -3, scale: 1.03 }}
-          whileTap={file && { y: 2, scale: 0.98 }}
-          className={cn(
-            "px-12 py-4 rounded-2xl font-pixel text-sm tracking-[0.25em] uppercase border-b-4 flex items-center gap-3",
-            file
-              ? "bg-balatro-green text-white border-green-900"
-              : "bg-balatro-card-edge text-balatro-text-dim border-black opacity-50 cursor-not-allowed",
-          )}
-        >
+        <BalatroButton onClick={onBack} disabled={!file} variant="green">
           <CheckCircle2 size={18} /> Confirmar Importação
-        </Motion.button>
+        </BalatroButton>
       </main>
     </CRTFrame>
   );

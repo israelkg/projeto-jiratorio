@@ -6,6 +6,7 @@ import {
   FileText, FileSpreadsheet, Presentation, Check, X, Save, Sparkles,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
+import { BalatroButton } from "@/components/balatro/BalatroButton";
 import { cn } from "@/lib/utils";
 
 const ACCEPTED = [".pdf", ".pptx", ".txt", ".csv", ".docx"];
@@ -200,22 +201,13 @@ export default function ImportMaterialPage() {
           </div>
         )}
 
-        <Motion.button
+        <BalatroButton
           onClick={handleSave}
           disabled={files.length === 0}
-          whileHover={files.length > 0 && { y: -3, scale: 1.03 }}
-          whileTap={files.length > 0 && { y: 2, scale: 0.98 }}
-          className={cn(
-            "px-12 py-4 rounded-2xl font-pixel text-sm tracking-[0.25em] uppercase border-b-4 flex items-center gap-3",
-            saved
-              ? "bg-balatro-green text-white border-green-900"
-              : files.length === 0
-                ? "bg-balatro-card-edge text-balatro-text-dim border-black opacity-50 cursor-not-allowed"
-                : "bg-balatro-purple text-white border-purple-950 hover:shadow-[0_0_32px_rgba(155,89,182,0.6)]",
-          )}
+          variant={saved ? "green" : "purple"}
         >
           {saved ? <><Check size={18} /> Salvo!</> : <><Save size={18} /> Salvar Material</>}
-        </Motion.button>
+        </BalatroButton>
       </main>
     </CRTFrame>
   );
