@@ -1,13 +1,22 @@
 import { useState } from "react";
-import { Home, UserCircle2, ChevronLeft, Pencil, Trash2, Check, AlertTriangle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { motion as Motion } from "motion/react";
+import {
+  Home, UserCircle2, ChevronLeft, Pencil, Trash2, Check, AlertTriangle, Spade,
+} from "lucide-react";
+import { CRTFrame } from "@/components/balatro/CRTFrame";
+import { cn } from "@/lib/utils";
 
-// Default question passed via props; falls back to this placeholder
 const DEFAULT_QUESTION = {
   id: 1,
   text: "Explique o processo de meiose e sua importância genética para as células reprodutivas.",
 };
 
-export default function EditQuestionPage({ onBack, onHome, question = DEFAULT_QUESTION, onSave, onDelete }) {
+export default function EditQuestionPage({ question = DEFAULT_QUESTION, onSave, onDelete }) {
+  const navigate = useNavigate();
+  const onHome = () => navigate("/");
+  const onBack = () => navigate(-1);
+
   const [editText, setEditText] = useState(question.text);
   const [saved, setSaved] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -24,187 +33,161 @@ export default function EditQuestionPage({ onBack, onHome, question = DEFAULT_QU
   const handleDelete = () => {
     if (!confirmDelete) { setConfirmDelete(true); return; }
     onDelete?.(question.id);
-    onBack?.();
+    navigate(-1);
   };
 
   return (
-    <div
-      className="min-h-screen flex flex-col relative overflow-hidden"
-      style={{ background: "#1a1a2e" }}
-    >
-      {/* Background orbs */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 right-1/3 w-80 h-80 rounded-full opacity-15 blur-3xl animate-pulse"
-          style={{ background: "radial-gradient(circle, #0ea5e9, transparent)" }} />
-        <div className="absolute bottom-0 left-1/4 w-64 h-64 rounded-full opacity-10 blur-3xl animate-pulse"
-          style={{ background: "radial-gradient(circle, #7c3aed, transparent)", animationDelay: "1.5s" }} />
-      </div>
-
-      {/* Grid overlay */}
-      <div className="absolute inset-0 opacity-5 pointer-events-none"
-        style={{
-          backgroundImage: "linear-gradient(#0ea5e9 1px, transparent 1px), linear-gradient(90deg, #0ea5e9 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }} />
-
-      {/* Nav */}
-      <nav className="relative z-10 flex items-center justify-between px-8 py-4 flex-shrink-0"
-        style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(12px)" }}>
+    <CRTFrame>
+      <nav className="relative z-10 flex items-center justify-between px-8 py-4 border-b-2 border-balatro-card-edge bg-black/40 backdrop-blur-md">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#ef4444" }} />
-            <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#f59e0b" }} />
-            <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#22c55e" }} />
+            <span className="w-2.5 h-2.5 rounded-full bg-balatro-red" />
+            <span className="w-2.5 h-2.5 rounded-full bg-balatro-gold" />
+            <span className="w-2.5 h-2.5 rounded-full bg-balatro-green" />
           </div>
-          <button onClick={onBack}
-            className="flex items-center gap-1.5 text-xs font-bold tracking-widest uppercase transition-all duration-200"
-            style={{ color: "rgba(255,255,255,0.4)" }}
-            onMouseEnter={e => e.currentTarget.style.color = "#38bdf8"}
-            onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.4)"}>
+          <button onClick={onBack} className="font-pixel text-[10px] tracking-[0.3em] uppercase text-balatro-text-dim hover:text-balatro-blue transition-colors flex items-center gap-1.5">
             <ChevronLeft size={14} /> Voltar
           </button>
         </div>
+        <div className="font-pixel text-[10px] tracking-[0.3em] text-balatro-text-dim uppercase">
+          Card Editor · #{String(question.id).padStart(3, "0")}
+        </div>
         <div className="flex items-center gap-6">
-          <button onClick={onHome}
-            className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase transition-all duration-200"
-            style={{ color: "rgba(255,255,255,0.5)" }}
-            onMouseEnter={e => e.currentTarget.style.color = "#38bdf8"}
-            onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.5)"}>
+          <button onClick={onHome} className="font-pixel text-[10px] tracking-[0.3em] uppercase text-balatro-text-dim hover:text-balatro-blue transition-colors flex items-center gap-2">
             <Home size={14} /> Home
           </button>
-          <button style={{ color: "rgba(255,255,255,0.4)" }}
-            onMouseEnter={e => e.currentTarget.style.color = "#38bdf8"}
-            onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.4)"}>
-            <UserCircle2 size={28} />
+          <button className="text-balatro-text-dim hover:text-balatro-blue transition-colors">
+            <UserCircle2 size={26} />
           </button>
         </div>
       </nav>
 
-      {/* Content */}
-      <main className="relative z-10 flex-1 flex flex-col items-center px-6 py-10 gap-7">
-
-        {/* Title */}
-        <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-2 mb-1">
-            <Pencil size={20} style={{ color: "#38bdf8" }} />
-          </div>
-          <h1 className="text-4xl font-black tracking-tight uppercase"
-            style={{
-              background: "linear-gradient(135deg, #f8fafc 0%, #38bdf8 50%, #818cf8 100%)",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-            }}>
-            Editar Pergunta
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-8 gap-6">
+        <Motion.div
+          initial={{ y: -30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 280, damping: 22 }}
+          className="text-center space-y-2"
+        >
+          <p className="font-pixel text-[10px] tracking-[0.4em] text-balatro-blue text-glow-blue uppercase flex items-center justify-center gap-2">
+            <Pencil size={14} /> Card Editor <Pencil size={14} />
+          </p>
+          <h1 className="font-pixel text-3xl md:text-4xl text-balatro-text leading-tight"
+              style={{ filter: "drop-shadow(0 0 14px rgba(0,157,255,0.5))" }}>
+            EDITAR PERGUNTA
           </h1>
-          <div className="w-24 h-0.5 mx-auto rounded-full"
-            style={{ background: "linear-gradient(90deg, #0ea5e9, #6366f1)" }} />
-        </div>
+        </Motion.div>
 
-        {/* Original (read-only) */}
-        <div className="w-full max-w-lg flex flex-col gap-2">
-          <label className="text-[10px] font-bold tracking-widest uppercase"
-            style={{ color: "rgba(255,255,255,0.3)" }}>
-            Texto original
-          </label>
-          <div className="w-full rounded-2xl px-5 py-4 text-sm leading-relaxed"
-            style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.07)",
-              color: "rgba(255,255,255,0.3)",
-              backdropFilter: "blur(8px)",
-              minHeight: 90,
-            }}>
-            {question.text}
-          </div>
-        </div>
-
-        {/* Editable textarea */}
-        <div className="w-full max-w-lg flex flex-col gap-2">
-          <label className="text-[10px] font-bold tracking-widest uppercase"
-            style={{ color: "rgba(255,255,255,0.5)" }}>
-            Texto editado
-          </label>
-          <textarea
-            value={editText}
-            onChange={e => { setEditText(e.target.value); setSaved(false); }}
-            rows={4}
-            placeholder="Digite o novo texto da pergunta..."
-            className="w-full rounded-2xl px-5 py-4 text-sm leading-relaxed resize-none outline-none transition-all duration-300"
-            style={{
-              background: "rgba(255,255,255,0.06)",
-              border: isDirty ? "1px solid rgba(56,189,248,0.5)" : "1px solid rgba(255,255,255,0.1)",
-              color: "rgba(255,255,255,0.85)",
-              backdropFilter: "blur(8px)",
-              boxShadow: isDirty ? "0 0 0 3px rgba(14,165,233,0.1)" : "none",
-            }}
-            onFocus={e => {
-              e.currentTarget.style.border = "1px solid rgba(56,189,248,0.6)";
-              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(14,165,233,0.15)";
-            }}
-            onBlur={e => {
-              e.currentTarget.style.border = isDirty ? "1px solid rgba(56,189,248,0.5)" : "1px solid rgba(255,255,255,0.1)";
-              e.currentTarget.style.boxShadow = isDirty ? "0 0 0 3px rgba(14,165,233,0.1)" : "none";
-            }}
-          />
-          <div className="flex justify-end">
-            <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.2)" }}>
-              {editText.length} caracteres
+        <Motion.div
+          initial={{ scale: 0.92, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.1, type: "spring", stiffness: 240, damping: 20 }}
+          className="relative w-full max-w-2xl rounded-2xl border-4 border-balatro-blue bg-balatro-card overflow-hidden"
+          style={{ boxShadow: "0 16px 0 #000, 0 24px 48px rgba(0,157,255,0.3)" }}
+        >
+          {/* Top corners */}
+          <div className="flex items-start justify-between p-4 pb-0" style={{ color: "#009dff" }}>
+            <div className="flex flex-col items-center leading-none">
+              <span className="font-pixel text-base">Q</span>
+              <Spade size={14} fill="currentColor" />
+            </div>
+            <span className="font-pixel text-[8px] tracking-[0.3em] text-balatro-text-dim uppercase">
+              Pergunta · #{String(question.id).padStart(3, "0")}
             </span>
+            <div className="flex flex-col items-center leading-none rotate-180">
+              <span className="font-pixel text-base">Q</span>
+              <Spade size={14} fill="currentColor" />
+            </div>
           </div>
-        </div>
 
-        {/* Confirm delete warning */}
-        {confirmDelete && (
-          <div className="w-full max-w-lg rounded-2xl px-5 py-3 flex items-center gap-3"
-            style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)" }}>
-            <AlertTriangle size={16} style={{ color: "#f87171", flexShrink: 0 }} />
-            <p className="text-xs font-semibold" style={{ color: "#fca5a5" }}>
-              Tem certeza? Clique em <strong>Excluir</strong> novamente para confirmar. Esta ação não pode ser desfeita.
+          {/* Body */}
+          <div className="p-6">
+            <p className="font-pixel text-[9px] tracking-[0.3em] text-balatro-text-dim uppercase mb-2">
+              Texto da pergunta
             </p>
+            <textarea
+              value={editText}
+              onChange={(e) => { setEditText(e.target.value); setSaved(false); }}
+              rows={6}
+              className="w-full bg-balatro-bg-deep border-2 border-balatro-card-edge focus:border-balatro-blue rounded-lg p-4 text-base text-balatro-text leading-relaxed font-mono outline-none resize-none transition-colors"
+            />
+            <div className="flex items-center justify-between mt-2">
+              <span className="font-pixel text-[8px] tracking-[0.2em] text-balatro-text-dim uppercase">
+                {editText.length} caracteres
+              </span>
+              {isDirty && (
+                <span className="font-pixel text-[8px] tracking-[0.2em] text-balatro-gold uppercase flex items-center gap-1">
+                  <AlertTriangle size={10} /> Alterado
+                </span>
+              )}
+            </div>
           </div>
+
+          {/* Bottom corners */}
+          <div className="flex items-end justify-between p-4 pt-0" style={{ color: "#009dff" }}>
+            <div className="flex flex-col items-center leading-none rotate-180">
+              <span className="font-pixel text-base">Q</span>
+              <Spade size={14} fill="currentColor" />
+            </div>
+            <div className="flex flex-col items-center leading-none">
+              <span className="font-pixel text-base">Q</span>
+              <Spade size={14} fill="currentColor" />
+            </div>
+          </div>
+        </Motion.div>
+
+        {confirmDelete && (
+          <Motion.div
+            initial={{ y: -10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="rounded-lg border-2 border-balatro-red bg-balatro-red/15 px-4 py-2 flex items-center gap-2"
+          >
+            <AlertTriangle size={14} className="text-balatro-red" />
+            <span className="font-pixel text-[10px] tracking-[0.2em] text-balatro-red uppercase">
+              Clique novamente para confirmar
+            </span>
+          </Motion.div>
         )}
 
-        {/* Action buttons */}
-        <div className="w-full max-w-lg flex items-center gap-4">
-          {/* Delete */}
-          <button
+        {/* Actions */}
+        <Motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="flex gap-4"
+        >
+          <Motion.button
             onClick={handleDelete}
-            className="flex-1 py-4 rounded-2xl text-sm font-black tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-2"
-            style={{
-              background: confirmDelete
-                ? "linear-gradient(135deg, #b91c1c, #ef4444)"
-                : "rgba(239,68,68,0.1)",
-              color: confirmDelete ? "white" : "#f87171",
-              border: "1px solid rgba(239,68,68,0.3)",
-              boxShadow: confirmDelete ? "0 12px 32px rgba(239,68,68,0.35)" : "none",
-            }}>
-            <Trash2 size={16} />
-            {confirmDelete ? "Confirmar Exclusão" : "Excluir Pergunta"}
-          </button>
-
-          {/* Save */}
-          <button
+            whileHover={{ y: -3, scale: 1.03 }}
+            whileTap={{ y: 2, scale: 0.98 }}
+            className={cn(
+              "px-8 py-4 rounded-2xl font-pixel text-[11px] tracking-[0.25em] uppercase border-b-4 flex items-center gap-2",
+              confirmDelete
+                ? "bg-balatro-red text-white border-red-950 animate-pulse"
+                : "bg-balatro-card text-balatro-red border-black hover:bg-balatro-red/20",
+            )}
+          >
+            <Trash2 size={14} />
+            {confirmDelete ? "Confirmar?" : "Excluir"}
+          </Motion.button>
+          <Motion.button
             onClick={handleSave}
-            disabled={!editText.trim()}
-            className="flex-1 py-4 rounded-2xl text-sm font-black tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-2"
-            style={{
-              background: saved
-                ? "linear-gradient(135deg, #059669, #0d9488)"
-                : !editText.trim()
-                ? "rgba(255,255,255,0.05)"
-                : "linear-gradient(135deg, #0284c7, #0ea5e9)",
-              color: !editText.trim() ? "rgba(255,255,255,0.2)" : "white",
-              border: "1px solid rgba(255,255,255,0.1)",
-              boxShadow: saved
-                ? "0 12px 32px rgba(5,150,105,0.4)"
-                : !editText.trim()
-                ? "none"
-                : "0 12px 32px rgba(14,165,233,0.4)",
-              cursor: !editText.trim() ? "not-allowed" : "pointer",
-            }}>
-            {saved ? <><Check size={16} /> Salvo!</> : <><Pencil size={16} /> Salvar Pergunta</>}
-          </button>
-        </div>
+            disabled={!isDirty || !editText.trim()}
+            whileHover={isDirty && editText.trim() && { y: -3, scale: 1.03 }}
+            whileTap={isDirty && editText.trim() && { y: 2, scale: 0.98 }}
+            className={cn(
+              "px-12 py-4 rounded-2xl font-pixel text-sm tracking-[0.25em] uppercase border-b-4 flex items-center gap-3",
+              saved
+                ? "bg-balatro-green text-white border-green-900"
+                : !isDirty || !editText.trim()
+                  ? "bg-balatro-card-edge text-balatro-text-dim border-black opacity-50 cursor-not-allowed"
+                  : "bg-balatro-blue text-white border-blue-950 hover:shadow-balatro-glow-blue",
+            )}
+          >
+            {saved ? <><Check size={18} /> Salvo!</> : <><Check size={18} /> Salvar</>}
+          </Motion.button>
+        </Motion.div>
       </main>
-    </div>
+    </CRTFrame>
   );
 }

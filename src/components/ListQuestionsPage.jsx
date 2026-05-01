@@ -1,18 +1,42 @@
 import { useState } from "react";
-import { Home, UserCircle2, ChevronLeft, Pencil, Trash2, Plus, Check, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { motion as Motion } from "motion/react";
+import {
+  Home, UserCircle2, ChevronLeft, Pencil, Trash2, Plus, Check, X, BookOpen,
+} from "lucide-react";
+import { CRTFrame } from "@/components/balatro/CRTFrame";
 
 const INITIAL_QUESTIONS = [
-  { id: 1, text: "O que é mitose?", type: "Múltipla Escolha", difficulty: "Médio" },
-  { id: 2, text: "A fotossíntese ocorre nos cloroplastos?", type: "Verdadeiro / Falso", difficulty: "Fácil" },
-  { id: 3, text: "Explique o processo de meiose.", type: "Dissertativa", difficulty: "Difícil" },
-  { id: 4, text: "Qual é a fórmula da água?", type: "Múltipla Escolha", difficulty: "Fácil" },
-  { id: 5, text: "Descreva a estrutura do DNA.", type: "Dissertativa", difficulty: "Difícil" },
+  { id: 1, text: "O que é mitose?",                          type: "multipla",     difficulty: "medio" },
+  { id: 2, text: "A fotossíntese ocorre nos cloroplastos?",  type: "verdadeiro",   difficulty: "facil" },
+  { id: 3, text: "Explique o processo de meiose.",           type: "dissertativa", difficulty: "dificil" },
+  { id: 4, text: "Qual é a fórmula da água?",                type: "multipla",     difficulty: "facil" },
+  { id: 5, text: "Descreva a estrutura do DNA.",             type: "dissertativa", difficulty: "dificil" },
 ];
 
-const DIFF_COLORS = { Fácil: "#22c55e", Médio: "#f59e0b", Difícil: "#ef4444" };
-const TYPE_COLORS = { "Múltipla Escolha": "#7c3aed", "Verdadeiro / Falso": "#0ea5e9", Dissertativa: "#10b981" };
+const DIFF = {
+  facil:   { color: "#50c878", label: "Fácil" },
+  medio:   { color: "#f0c040", label: "Médio" },
+  dificil: { color: "#fe5f55", label: "Difícil" },
+};
 
-export default function ListQuestionsPage({ onBack, onHome }) {
+const TYPE_LABEL = {
+  multipla:     "Múltipla",
+  verdadeiro:   "V/F",
+  dissertativa: "Dissertativa",
+};
+
+const TYPE_COLOR = {
+  multipla:     "#9b59b6",
+  verdadeiro:   "#009dff",
+  dissertativa: "#50c878",
+};
+
+export default function ListQuestionsPage() {
+  const navigate = useNavigate();
+  const onHome = () => navigate("/");
+  const onBack = () => navigate(-1);
+
   const [questions, setQuestions] = useState(INITIAL_QUESTIONS);
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState("");
@@ -21,168 +45,183 @@ export default function ListQuestionsPage({ onBack, onHome }) {
 
   const startEdit = (q) => { setEditingId(q.id); setEditText(q.text); };
   const saveEdit = () => {
-    setQuestions(qs => qs.map(q => q.id === editingId ? { ...q, text: editText } : q));
+    setQuestions((qs) => qs.map((q) => (q.id === editingId ? { ...q, text: editText } : q)));
     setEditingId(null);
   };
-  const deleteQ = (id) => setQuestions(qs => qs.filter(q => q.id !== id));
-  const addQuestion = () => {
+  const removeQ = (id) => setQuestions((qs) => qs.filter((q) => q.id !== id));
+  const addNew = () => {
     if (!newText.trim()) return;
-    setQuestions(qs => [...qs, { id: Date.now(), text: newText.trim(), type: "Múltipla Escolha", difficulty: "Médio" }]);
-    setNewText(""); setAdding(false);
+    const id = Math.max(0, ...questions.map((q) => q.id)) + 1;
+    setQuestions((qs) => [...qs, { id, text: newText, type: "multipla", difficulty: "medio" }]);
+    setNewText("");
+    setAdding(false);
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ background: "#1a1a2e" }}>
-      {/* Orbs */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 right-1/3 w-80 h-80 rounded-full opacity-15 blur-3xl animate-pulse"
-          style={{ background: "radial-gradient(circle, #10b981, transparent)" }} />
-        <div className="absolute bottom-0 left-1/4 w-64 h-64 rounded-full opacity-10 blur-3xl animate-pulse"
-          style={{ background: "radial-gradient(circle, #7c3aed, transparent)", animationDelay: "1.5s" }} />
-      </div>
-      <div className="absolute inset-0 opacity-5 pointer-events-none"
-        style={{ backgroundImage: "linear-gradient(#a855f7 1px, transparent 1px), linear-gradient(90deg, #a855f7 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
-
-      {/* Nav */}
-      <nav className="relative z-10 flex items-center justify-between px-8 py-4"
-        style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(12px)" }}>
+    <CRTFrame>
+      <nav className="relative z-10 flex items-center justify-between px-8 py-4 border-b-2 border-balatro-card-edge bg-black/40 backdrop-blur-md">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#ef4444" }} />
-            <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#f59e0b" }} />
-            <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#22c55e" }} />
+            <span className="w-2.5 h-2.5 rounded-full bg-balatro-red" />
+            <span className="w-2.5 h-2.5 rounded-full bg-balatro-gold" />
+            <span className="w-2.5 h-2.5 rounded-full bg-balatro-green" />
           </div>
-          <button onClick={onBack} className="flex items-center gap-1.5 text-xs font-bold tracking-widest uppercase transition-all duration-200"
-            style={{ color: "rgba(255,255,255,0.4)" }}
-            onMouseEnter={e => e.currentTarget.style.color = "#10b981"}
-            onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.4)"}>
+          <button onClick={onBack} className="font-pixel text-[10px] tracking-[0.3em] uppercase text-balatro-text-dim hover:text-balatro-green transition-colors flex items-center gap-1.5">
             <ChevronLeft size={14} /> Voltar
           </button>
         </div>
+        <div className="font-pixel text-[10px] tracking-[0.3em] text-balatro-text-dim uppercase">
+          Question Library
+        </div>
         <div className="flex items-center gap-6">
-          <button onClick={onHome} className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase transition-all duration-200"
-            style={{ color: "rgba(255,255,255,0.5)" }}
-            onMouseEnter={e => e.currentTarget.style.color = "#c084fc"}
-            onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.5)"}>
+          <button onClick={onHome} className="font-pixel text-[10px] tracking-[0.3em] uppercase text-balatro-text-dim hover:text-balatro-green transition-colors flex items-center gap-2">
             <Home size={14} /> Home
           </button>
-          <button style={{ color: "rgba(255,255,255,0.4)" }}
-            onMouseEnter={e => e.currentTarget.style.color = "#c084fc"}
-            onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.4)"}>
-            <UserCircle2 size={28} />
+          <button className="text-balatro-text-dim hover:text-balatro-green transition-colors">
+            <UserCircle2 size={26} />
           </button>
         </div>
       </nav>
 
-      {/* Content */}
-      <main className="relative z-10 flex-1 flex flex-col items-center px-6 py-10 gap-6">
-        {/* Title */}
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-black tracking-tight uppercase"
-            style={{ background: "linear-gradient(135deg, #f8fafc 0%, #6ee7b7 50%, #818cf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-            Listar / Editar
-          </h1>
-          <p className="text-xs font-semibold tracking-[0.2em] uppercase" style={{ color: "#34d399" }}>
-            {questions.length} pergunta{questions.length !== 1 ? "s" : ""}
+      <main className="relative z-10 flex-1 overflow-y-auto px-6 py-8 flex flex-col items-center gap-6">
+        <Motion.div
+          initial={{ y: -30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 280, damping: 22 }}
+          className="text-center space-y-2"
+        >
+          <p className="font-pixel text-[10px] tracking-[0.4em] text-balatro-green uppercase flex items-center justify-center gap-2"
+             style={{ textShadow: "0 0 12px rgba(80,200,120,0.6)" }}>
+            <BookOpen size={14} /> Question Library <BookOpen size={14} />
           </p>
-          <div className="w-24 h-0.5 mx-auto rounded-full" style={{ background: "linear-gradient(90deg, #10b981, #818cf8)" }} />
-        </div>
+          <h1 className="font-pixel text-3xl md:text-4xl text-balatro-text leading-tight"
+              style={{ filter: "drop-shadow(0 0 14px rgba(80,200,120,0.5))" }}>
+            LISTAR PERGUNTAS
+          </h1>
+          <p className="font-pixel text-[8px] tracking-[0.3em] text-balatro-text-dim uppercase">
+            ◆ {questions.length} perguntas ◆
+          </p>
+        </Motion.div>
 
-        {/* Questions list */}
-        <div className="w-full max-w-lg flex flex-col gap-3">
-          {questions.map((q, i) => (
-            <div key={q.id}
-              className="rounded-2xl px-5 py-4 flex items-start gap-4 transition-all duration-300"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(16px)" }}>
-              {/* Number */}
-              <span className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black flex-shrink-0 mt-0.5"
-                style={{ background: "rgba(16,185,129,0.15)", color: "#34d399", border: "1px solid rgba(16,185,129,0.3)" }}>
-                {i + 1}
-              </span>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                {editingId === q.id ? (
-                  <input value={editText} onChange={e => setEditText(e.target.value)}
-                    className="w-full text-sm rounded-lg px-3 py-1.5 outline-none"
-                    style={{ background: "rgba(255,255,255,0.08)", border: "1px solid #10b981", color: "white" }}
-                    autoFocus />
-                ) : (
-                  <p className="text-sm leading-snug" style={{ color: "rgba(255,255,255,0.8)" }}>{q.text}</p>
-                )}
-                <div className="flex items-center gap-2 mt-2">
-                  <Tag color={TYPE_COLORS[q.type] || "#7c3aed"} label={q.type} />
-                  <Tag color={DIFF_COLORS[q.difficulty] || "#f59e0b"} label={q.difficulty} />
+        <div className="w-full max-w-3xl flex flex-col gap-3">
+          {questions.map((q, i) => {
+            const isEditing = editingId === q.id;
+            const diff = DIFF[q.difficulty];
+            const typeColor = TYPE_COLOR[q.type];
+            return (
+              <Motion.div
+                key={q.id}
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.05 + i * 0.05 }}
+                className="rounded-xl border-2 border-balatro-card-edge bg-balatro-card/80 backdrop-blur-md p-4 hover:border-balatro-green/60 transition-colors"
+                style={{ boxShadow: "0 8px 0 #000, 0 14px 24px rgba(0,0,0,0.5)" }}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                    <span className="font-pixel text-base text-balatro-text">#{q.id}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <span
+                        className="font-pixel text-[8px] tracking-[0.2em] uppercase px-2 py-0.5 rounded"
+                        style={{ color: typeColor, background: `${typeColor}20` }}
+                      >
+                        {TYPE_LABEL[q.type]}
+                      </span>
+                      <span
+                        className="font-pixel text-[8px] tracking-[0.2em] uppercase px-2 py-0.5 rounded"
+                        style={{ color: diff.color, background: `${diff.color}20` }}
+                      >
+                        {diff.label}
+                      </span>
+                    </div>
+                    {isEditing ? (
+                      <textarea
+                        autoFocus
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        className="w-full bg-balatro-bg-deep border-2 border-balatro-purple rounded-md p-2 text-sm text-balatro-text resize-none font-mono outline-none"
+                        rows={2}
+                      />
+                    ) : (
+                      <p className="text-sm text-balatro-text leading-snug">{q.text}</p>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2 flex-shrink-0">
+                    {isEditing ? (
+                      <>
+                        <IconButton onClick={saveEdit} color="#50c878"><Check size={14} /></IconButton>
+                        <IconButton onClick={() => setEditingId(null)} color="#fe5f55"><X size={14} /></IconButton>
+                      </>
+                    ) : (
+                      <>
+                        <IconButton onClick={() => startEdit(q)} color="#009dff"><Pencil size={14} /></IconButton>
+                        <IconButton onClick={() => removeQ(q.id)} color="#fe5f55"><Trash2 size={14} /></IconButton>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
+              </Motion.div>
+            );
+          })}
 
-              {/* Actions */}
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                {editingId === q.id ? (
-                  <>
-                    <IconBtn icon={<Check size={13} />} color="#10b981" onClick={saveEdit} />
-                    <IconBtn icon={<X size={13} />} color="#ef4444" onClick={() => setEditingId(null)} />
-                  </>
-                ) : (
-                  <>
-                    <IconBtn icon={<Pencil size={13} />} color="#0ea5e9" onClick={() => startEdit(q)} />
-                    <IconBtn icon={<Trash2 size={13} />} color="#ef4444" onClick={() => deleteQ(q.id)} />
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-
-          {/* Add new question */}
+          {/* Add new */}
           {adding ? (
-            <div className="rounded-2xl px-5 py-4 flex items-center gap-3"
-              style={{ background: "rgba(16,185,129,0.08)", border: "1px dashed rgba(16,185,129,0.4)" }}>
-              <input value={newText} onChange={e => setNewText(e.target.value)}
-                placeholder="Nova pergunta..."
-                className="flex-1 text-sm outline-none bg-transparent"
-                style={{ color: "white" }}
-                onKeyDown={e => e.key === "Enter" && addQuestion()}
-                autoFocus />
-              <IconBtn icon={<Check size={13} />} color="#10b981" onClick={addQuestion} />
-              <IconBtn icon={<X size={13} />} color="#ef4444" onClick={() => { setAdding(false); setNewText(""); }} />
-            </div>
+            <Motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="rounded-xl border-2 border-balatro-purple bg-balatro-card/80 p-4"
+              style={{ boxShadow: "0 8px 0 #000, 0 14px 24px rgba(155,89,182,0.3)" }}
+            >
+              <textarea
+                autoFocus
+                value={newText}
+                onChange={(e) => setNewText(e.target.value)}
+                placeholder="Digite a pergunta..."
+                className="w-full bg-balatro-bg-deep border-2 border-balatro-purple rounded-md p-2 text-sm text-balatro-text resize-none font-mono outline-none mb-3"
+                rows={2}
+              />
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => { setAdding(false); setNewText(""); }}
+                  className="px-4 py-2 rounded-md bg-balatro-card-edge text-balatro-text font-pixel text-[9px] tracking-[0.2em] uppercase"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={addNew}
+                  className="px-4 py-2 rounded-md bg-balatro-green text-white font-pixel text-[9px] tracking-[0.2em] uppercase"
+                >
+                  Adicionar
+                </button>
+              </div>
+            </Motion.div>
           ) : (
-            <button onClick={() => setAdding(true)}
-              className="w-full py-3 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold tracking-widest uppercase transition-all duration-300"
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px dashed rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.3)" }}
-              onMouseEnter={e => { e.currentTarget.style.color = "#34d399"; e.currentTarget.style.borderColor = "rgba(16,185,129,0.4)"; e.currentTarget.style.background = "rgba(16,185,129,0.06)"; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.3)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}>
-              <Plus size={14} /> Adicionar pergunta
-            </button>
+            <Motion.button
+              onClick={() => setAdding(true)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="rounded-xl border-2 border-dashed border-balatro-card-edge bg-balatro-card/40 hover:border-balatro-green hover:text-balatro-green text-balatro-text-dim p-4 flex items-center justify-center gap-2 font-pixel text-[10px] tracking-[0.25em] uppercase transition-colors"
+            >
+              <Plus size={16} /> Nova Pergunta
+            </Motion.button>
           )}
         </div>
       </main>
-    </div>
+    </CRTFrame>
   );
 }
 
-function Tag({ color, label }) {
+function IconButton({ children, onClick, color }) {
   return (
-    <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-md"
-      style={{ background: `rgba(${hexRgb(color)},0.15)`, color, border: `1px solid rgba(${hexRgb(color)},0.3)` }}>
-      {label}
-    </span>
-  );
-}
-
-function IconBtn({ icon, color, onClick }) {
-  return (
-    <button onClick={onClick}
-      className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-200"
-      style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)" }}
-      onMouseEnter={e => { e.currentTarget.style.background = `rgba(${hexRgb(color)},0.2)`; e.currentTarget.style.color = color; }}
-      onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.4)"; }}>
-      {icon}
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-8 h-8 rounded-lg border-2 flex items-center justify-center hover:scale-110 transition-transform"
+      style={{ borderColor: color, color }}
+    >
+      {children}
     </button>
   );
-}
-
-function hexRgb(hex) {
-  const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return r ? `${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}` : "255,255,255";
 }

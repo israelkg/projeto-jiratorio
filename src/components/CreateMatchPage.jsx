@@ -1,275 +1,127 @@
 import { useState } from "react";
+import { motion as Motion } from "motion/react";
+import { useNavigate } from "react-router-dom";
 import {
-  Home,
-  UserCircle2,
-  Upload,
-  Users,
-  User,
-  Sparkles,
-  ListOrdered,
-  Zap,
-  Package,
-  HelpCircle,
-  LayoutList,
-  Sparkles,
-  PlayCircle,
-  ChevronRight,
+  Home, UserCircle2, Upload, Users, User, Sparkles,
+  ListOrdered, Zap, Package, HelpCircle, LayoutList,
+  PlayCircle, ChevronRight, Spade,
 } from "lucide-react";
+import { CRTFrame } from "@/components/balatro/CRTFrame";
 
-export default function CreateMatchPage({ onHome, onImport, onGenerate, onList, onPowerUps, onInventory, onQuestionCount, onChooseQuestions, onSelectPowerUps }) {
-  const [mode, setMode] = useState("individual"); // "individual" | "dupla"
-  const [startHover, setStartHover] = useState(false);
+import { cn } from "@/lib/utils";
 
-  const menuItems = [
-    {
-      id: "import",
-      icon: <Upload size={16} strokeWidth={2} />,
-      label: "Importar Material",
-      accent: "#7c3aed",
-      glow: "rgba(124,58,237,0.35)",
-      onClick: onImport,
-    },
-    {
-      id: "generate",
-      icon: <Sparkles size={16} strokeWidth={2} />,
-      label: "Gerar Perguntas",
-      accent: "#0ea5e9",
-      glow: "rgba(14,165,233,0.35)",
-      onClick: onGenerate,
-    },
-    {
-      id: "list",
-      icon: <ListOrdered size={16} strokeWidth={2} />,
-      label: "Listar / Editar Perguntas",
-      accent: "#10b981",
-      glow: "rgba(16,185,129,0.35)",
-      onClick: onList,
-    },
-    {
-      id: "powerups",
-      icon: <Zap size={16} strokeWidth={2} />,
-      label: "Power-Ups (%)",
-      accent: "#f59e0b",
-      glow: "rgba(245,158,11,0.35)",
-      onClick: onPowerUps,
-    },
-    {
-      id: "inventory",
-      icon: <Package size={16} strokeWidth={2} />,
-      label: "Inventário Inicial",
-      accent: "#6366f1",
-      glow: "rgba(99,102,241,0.35)",
-      onClick: onInventory,
-    },
-    {
-      id: "questioncount",
-      icon: <HelpCircle size={16} strokeWidth={2} />,
-      label: "Quantidade de Perguntas",
-      accent: "#0ea5e9",
-      glow: "rgba(14,165,233,0.35)",
-      onClick: onQuestionCount,
-    },
-    {
-      id: "choosequestions",
-      icon: <LayoutList size={16} strokeWidth={2} />,
-      label: "Escolher Perguntas",
-      accent: "#a855f7",
-      glow: "rgba(168,85,247,0.35)",
-      onClick: onChooseQuestions,
-    },
-    {
-      id: "selectpowerups",
-      icon: <Sparkles size={16} strokeWidth={2} />,
-      label: "Selecionar Power-Ups",
-      accent: "#f59e0b",
-      glow: "rgba(245,158,11,0.35)",
-      onClick: onSelectPowerUps,
-    },
-  ];
+const MENU_ITEMS = [
+  { id: "import",          icon: Upload,      label: "Importar Material",     suit: "♠", color: "balatro-blue",   to: "/import-material" },
+  { id: "generate",        icon: Sparkles,    label: "Gerar Perguntas",       suit: "♦", color: "balatro-blue",   to: "/generate" },
+  { id: "list",            icon: ListOrdered, label: "Listar / Editar",       suit: "♣", color: "balatro-green",  to: "/list" },
+  { id: "powerups",        icon: Zap,         label: "Power-Ups (%)",         suit: "♥", color: "balatro-gold",   to: "/powerups" },
+  { id: "inventory",       icon: Package,     label: "Inventário Inicial",    suit: "♠", color: "balatro-purple", to: "/inventory" },
+  { id: "questioncount",   icon: HelpCircle,  label: "Quantidade Perguntas",  suit: "♦", color: "balatro-blue",   to: "/question-count" },
+  { id: "choosequestions", icon: LayoutList,  label: "Escolher Perguntas",    suit: "♣", color: "balatro-purple", to: "/choose-questions" },
+  { id: "selectpowerups",  icon: Sparkles,    label: "Selecionar Power-Ups",  suit: "♥", color: "balatro-gold",   to: "/select-powerups" },
+];
 
+export default function CreateMatchPage() {
+  const navigate = useNavigate();
+  const [mode, setMode] = useState("individual");
+  const onHome = () => navigate("/");
 
   return (
-    <div
-      className="min-h-screen flex flex-col relative overflow-hidden"
-      style={{ background: "#1a1a2e" }}
-    >
-      {/* Background orbs */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div
-          className="absolute top-0 left-1/3 w-96 h-96 rounded-full opacity-15 blur-3xl animate-pulse"
-          style={{ background: "radial-gradient(circle, #7c3aed, transparent)" }}
-        />
-        <div
-          className="absolute bottom-0 right-1/4 w-72 h-72 rounded-full opacity-10 blur-3xl animate-pulse"
-          style={{ background: "radial-gradient(circle, #0ea5e9, transparent)", animationDelay: "1.5s" }}
-        />
-        <div
-          className="absolute top-1/2 right-0 w-64 h-64 rounded-full opacity-10 blur-3xl animate-pulse"
-          style={{ background: "radial-gradient(circle, #f59e0b, transparent)", animationDelay: "3s" }}
-        />
-      </div>
+    <CRTFrame className="bg-balatro-bg-deep">
+      
 
-      {/* Grid overlay */}
-      <div
-        className="absolute inset-0 opacity-5 pointer-events-none"
-        style={{
-          backgroundImage:
-            "linear-gradient(#a855f7 1px, transparent 1px), linear-gradient(90deg, #a855f7 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
-
-      {/* Nav bar */}
-      <nav
-        className="relative z-10 flex items-center justify-between px-8 py-4"
-        style={{
-          background: "rgba(255,255,255,0.04)",
-          borderBottom: "1px solid rgba(255,255,255,0.07)",
-          backdropFilter: "blur(12px)",
-        }}
-      >
+      <nav className="relative z-10 flex items-center justify-between px-8 py-4 border-b-2 border-balatro-card-edge bg-black/40 backdrop-blur-md">
         <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#ef4444" }} />
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#f59e0b" }} />
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#22c55e" }} />
+          <span className="w-2.5 h-2.5 rounded-full bg-balatro-red" />
+          <span className="w-2.5 h-2.5 rounded-full bg-balatro-gold" />
+          <span className="w-2.5 h-2.5 rounded-full bg-balatro-green" />
         </div>
         <div className="flex items-center gap-6">
           <button
             onClick={onHome}
-            className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase transition-all duration-200"
-            style={{ color: "rgba(255,255,255,0.5)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#c084fc")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.5)")}
+            className="font-pixel text-[10px] tracking-[0.3em] uppercase text-balatro-text-dim hover:text-balatro-red transition-colors flex items-center gap-2"
           >
-            <Home size={14} />
-            Home
+            <Home size={14} /> Home
           </button>
-          <button
-            style={{ color: "rgba(255,255,255,0.4)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#c084fc")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.4)")}
-          >
-            <UserCircle2 size={28} />
+          <button className="text-balatro-text-dim hover:text-balatro-red transition-colors">
+            <UserCircle2 size={26} />
           </button>
         </div>
       </nav>
 
-      {/* Content */}
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-10 gap-8">
-        {/* Title */}
-        <div className="text-center space-y-2">
-          <h1
-            className="text-4xl font-black tracking-tight uppercase"
-            style={{
-              background: "linear-gradient(135deg, #f8fafc 0%, #c084fc 50%, #818cf8 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
-            Criar Nova Partida
-          </h1>
-          <div
-            className="w-24 h-0.5 mx-auto rounded-full"
-            style={{ background: "linear-gradient(90deg, #7c3aed, #818cf8)" }}
-          />
-        </div>
-
-        {/* Options card */}
-        <div
-          className="w-full max-w-md rounded-2xl overflow-hidden flex flex-col gap-0"
-          style={{
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            backdropFilter: "blur(20px)",
-            boxShadow: "0 25px 60px rgba(0,0,0,0.45)",
-          }}
+        <Motion.div
+          initial={{ y: -30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 280, damping: 22 }}
+          className="text-center space-y-2"
         >
-          {/* Mode toggle row */}
-          <div
-            className="flex"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
-          >
-            <ModeButton
-              active={mode === "individual"}
-              icon={<User size={15} />}
-              label="Modo Individual"
-              onClick={() => setMode("individual")}
-              rounded="left"
-            />
-            <div style={{ width: "1px", background: "rgba(255,255,255,0.07)", flexShrink: 0 }} />
-            <ModeButton
-              active={mode === "dupla"}
-              icon={<Users size={15} />}
-              label="Modo em Dupla"
-              onClick={() => setMode("dupla")}
-              rounded="right"
-            />
+          <p className="font-pixel text-[10px] tracking-[0.4em] text-balatro-red text-glow-red uppercase">
+            ◆ Run Setup ◆
+          </p>
+          <h1 className="font-pixel text-3xl md:text-4xl text-balatro-text leading-tight"
+              style={{ filter: "drop-shadow(0 0 14px rgba(254,95,85,0.5))" }}>
+            CRIAR PARTIDA
+          </h1>
+        </Motion.div>
+
+        <Motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="w-full max-w-lg rounded-2xl border-2 border-balatro-card-edge bg-balatro-card/80 backdrop-blur-md overflow-hidden"
+          style={{ boxShadow: "0 16px 0 #000, 0 24px 48px rgba(0,0,0,0.7)" }}
+        >
+          <div className="grid grid-cols-2 border-b-2 border-balatro-card-edge">
+            <ModeButton active={mode === "individual"} icon={<User size={14} />} label="Individual" onClick={() => setMode("individual")} />
+            <ModeButton active={mode === "dupla"}      icon={<Users size={14} />} label="Em Dupla"   onClick={() => setMode("dupla")} />
           </div>
 
-          {/* Menu items */}
-          {menuItems.map((item, i) => (
-            <MenuRow
-              key={item.id}
-              icon={item.icon}
-              label={item.label}
-              accent={item.accent}
-              glow={item.glow}
-              onClick={item.onClick}
-              last={i === menuItems.length - 1}
-            />
-          ))}
-        </div>
+          <div className="flex flex-col">
+            {MENU_ITEMS.map((item, i) => (
+              <MenuRow
+                key={item.id}
+                Icon={item.icon}
+                label={item.label}
+                suit={item.suit}
+                color={item.color}
+                onClick={() => navigate(item.to)}
+                last={i === MENU_ITEMS.length - 1}
+                index={i}
+              />
+            ))}
+          </div>
+        </Motion.div>
 
-        {/* Start button */}
-        <button
-          className="px-14 py-4 rounded-2xl text-sm font-black tracking-widest uppercase transition-all duration-300"
-          style={{
-            background: startHover
-              ? "linear-gradient(135deg, #6d28d9, #4f46e5)"
-              : "linear-gradient(135deg, #7c3aed, #6d28d9)",
-            color: "white",
-            boxShadow: startHover
-              ? "0 20px 48px rgba(124,58,237,0.65)"
-              : "0 12px 32px rgba(124,58,237,0.45)",
-            transform: startHover ? "translateY(-4px) scale(1.03)" : "translateY(0) scale(1)",
-            border: "1px solid rgba(255,255,255,0.15)",
-          }}
-          onMouseEnter={() => setStartHover(true)}
-          onMouseLeave={() => setStartHover(false)}
+        <Motion.button
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          whileHover={{ y: -4, scale: 1.03 }}
+          whileTap={{ y: 2, scale: 0.98 }}
+          onClick={() => navigate(mode === "dupla" ? "/duo-mode" : "/sort-draw")}
+          className="group relative px-12 py-5 rounded-2xl bg-balatro-red text-white font-pixel text-sm tracking-[0.3em] uppercase border-b-4 border-red-950 hover:shadow-balatro-glow-red flex items-center gap-3"
         >
-          <span className="flex items-center gap-3">
-            <PlayCircle size={18} />
-            Iniciar Partida
-          </span>
-        </button>
+          <Spade size={18} fill="currentColor" />
+          <PlayCircle size={20} />
+          Iniciar Partida
+          <Spade size={18} fill="currentColor" />
+        </Motion.button>
       </main>
-    </div>
+    </CRTFrame>
   );
 }
 
-/* ─── Sub-components ─────────────────────────────────────── */
-
-function ModeButton({ active, icon, label, onClick, rounded }) {
+function ModeButton({ active, icon, label, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="flex-1 flex items-center justify-center gap-2 py-4 text-xs font-bold tracking-widest uppercase transition-all duration-300"
-      style={{
-        background: active
-          ? "linear-gradient(135deg, rgba(124,58,237,0.35), rgba(79,70,229,0.25))"
-          : "transparent",
-        color: active ? "#c084fc" : "rgba(255,255,255,0.35)",
-        borderBottom: active ? "2px solid #9333ea" : "2px solid transparent",
-        borderRadius:
-          rounded === "left" ? "0.75rem 0 0 0" : "0 0.75rem 0 0",
-      }}
-      onMouseEnter={(e) => {
-        if (!active) e.currentTarget.style.color = "rgba(255,255,255,0.65)";
-      }}
-      onMouseLeave={(e) => {
-        if (!active) e.currentTarget.style.color = "rgba(255,255,255,0.35)";
-      }}
+      className={cn(
+        "flex items-center justify-center gap-2 py-4 font-pixel text-[10px] tracking-[0.25em] uppercase transition-all border-b-2",
+        active
+          ? "bg-balatro-red/20 text-balatro-red text-glow-red border-balatro-red"
+          : "text-balatro-text-dim border-transparent hover:text-balatro-text hover:bg-white/5",
+      )}
     >
       {icon}
       {label}
@@ -277,55 +129,50 @@ function ModeButton({ active, icon, label, onClick, rounded }) {
   );
 }
 
-function MenuRow({ icon, label, accent, glow, onClick, last }) {
-  const [hovered, setHovered] = useState(false);
+const SUIT_COLORS = {
+  "balatro-blue":   "#009dff",
+  "balatro-red":    "#fe5f55",
+  "balatro-gold":   "#f0c040",
+  "balatro-green":  "#50c878",
+  "balatro-purple": "#9b59b6",
+};
 
+function MenuRow({ Icon, label, suit, color, onClick, last, index }) {
+  const accent = SUIT_COLORS[color];
   return (
-    <button
+    <Motion.button
       onClick={onClick}
-      className="w-full flex items-center justify-between px-6 py-4 text-left transition-all duration-300"
-      style={{
-        background: hovered ? `rgba(${hexToRgb(accent)}, 0.12)` : "transparent",
-        borderBottom: last ? "none" : "1px solid rgba(255,255,255,0.06)",
-        boxShadow: hovered ? `inset 3px 0 0 ${accent}` : `inset 3px 0 0 transparent`,
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      initial={{ x: -20, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ delay: 0.15 + index * 0.04 }}
+      whileHover={{ x: 6 }}
+      className={cn(
+        "group relative w-full flex items-center gap-4 px-5 py-3.5 text-left transition-colors",
+        !last && "border-b border-balatro-card-edge/50",
+      )}
     >
-      <div className="flex items-center gap-3">
-        <span
-          className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300"
-          style={{
-            background: hovered ? `rgba(${hexToRgb(accent)}, 0.25)` : "rgba(255,255,255,0.06)",
-            color: hovered ? accent : "rgba(255,255,255,0.5)",
-            boxShadow: hovered ? `0 4px 12px ${glow}` : "none",
-          }}
-        >
-          {icon}
-        </span>
-        <span
-          className="text-xs font-bold tracking-widest uppercase transition-colors duration-300"
-          style={{ color: hovered ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.55)" }}
-        >
-          {label}
-        </span>
-      </div>
-      <ChevronRight
-        size={14}
-        style={{
-          color: hovered ? accent : "rgba(255,255,255,0.2)",
-          transform: hovered ? "translateX(3px)" : "translateX(0)",
-          transition: "all 0.3s",
-        }}
+      <span
+        className="absolute left-0 top-0 bottom-0 w-1 opacity-0 scale-y-0 origin-center group-hover:opacity-100 group-hover:scale-y-100 transition-all duration-200"
+        style={{ background: accent }}
+        aria-hidden="true"
       />
-    </button>
-  );
-}
 
-// Helper to convert hex to r,g,b for rgba()
-function hexToRgb(hex) {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? `${parseInt(result[1], 16)},${parseInt(result[2], 16)},${parseInt(result[3], 16)}`
-    : "255,255,255";
+      <span
+        className="flex items-center justify-center w-9 h-9 rounded-lg border-2 border-balatro-card-edge bg-black/30 group-hover:border-current transition-colors"
+        style={{ color: accent }}
+      >
+        <Icon size={16} strokeWidth={2.5} />
+      </span>
+
+      <span className="font-pixel text-[10px] tracking-[0.2em] uppercase text-balatro-text-dim group-hover:text-balatro-text transition-colors flex-1">
+        {label}
+      </span>
+
+      <span className="font-pixel text-base group-hover:scale-125 transition-transform" style={{ color: accent }}>
+        {suit}
+      </span>
+
+      <ChevronRight size={14} className="text-balatro-text-dim group-hover:text-balatro-text transition-colors" />
+    </Motion.button>
+  );
 }

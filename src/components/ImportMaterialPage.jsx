@@ -1,33 +1,41 @@
 import { useState, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion as Motion } from "motion/react";
 import {
   CloudUpload, Home, UserCircle2, ChevronLeft,
-  FileText, FileSpreadsheet, Presentation, Check, X, Save,
+  FileText, FileSpreadsheet, Presentation, Check, X, Save, Sparkles,
 } from "lucide-react";
+import { CRTFrame } from "@/components/balatro/CRTFrame";
+import { cn } from "@/lib/utils";
 
 const ACCEPTED = [".pdf", ".pptx", ".txt", ".csv", ".docx"];
 
 const FILE_ICONS = {
-  pdf:  { icon: <FileText size={28} />,         color: "#ef4444", label: "PDF"  },
-  pptx: { icon: <Presentation size={28} />,     color: "#f97316", label: "PPTX" },
-  txt:  { icon: <FileText size={28} />,         color: "#94a3b8", label: "TXT"  },
-  csv:  { icon: <FileSpreadsheet size={28} />,  color: "#22c55e", label: "CSV"  },
-  docx: { icon: <FileText size={28} />,         color: "#3b82f6", label: "DOCX" },
+  pdf:  { Icon: FileText,        color: "#fe5f55", label: "PDF" },
+  pptx: { Icon: Presentation,    color: "#f0c040", label: "PPTX" },
+  txt:  { Icon: FileText,        color: "#cbd5e1", label: "TXT" },
+  csv:  { Icon: FileSpreadsheet, color: "#50c878", label: "CSV" },
+  docx: { Icon: FileText,        color: "#009dff", label: "DOCX" },
 };
 
 function getExt(name) {
   return name.split(".").pop().toLowerCase();
 }
 
-export default function ImportMaterialPage({ onHome, onBack }) {
+export default function ImportMaterialPage() {
+  const navigate = useNavigate();
+  const onHome = () => navigate("/");
+  const onBack = () => navigate(-1);
+
   const [dragging, setDragging] = useState(false);
-  const [files, setFiles]       = useState([]);
-  const [error, setError]       = useState("");
-  const [saved, setSaved]       = useState(false);
+  const [files, setFiles] = useState([]);
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
   const inputRef = useRef(null);
 
   const addFiles = (incoming) => {
     setSaved(false);
-    const valid   = [];
+    const valid = [];
     const invalid = [];
     Array.from(incoming).forEach((f) => {
       const ext = "." + getExt(f.name);
@@ -43,178 +51,172 @@ export default function ImportMaterialPage({ onHome, onBack }) {
   };
 
   const onDrop = useCallback((e) => {
-    e.preventDefault(); setDragging(false);
+    e.preventDefault();
+    setDragging(false);
     addFiles(e.dataTransfer.files);
   }, []);
 
+  const onDragOver = (e) => { e.preventDefault(); setDragging(true); };
+  const onDragLeave = () => setDragging(false);
   const remove = (name) => { setSaved(false); setFiles((f) => f.filter((x) => x.name !== name)); };
-  const handleSave = () => setSaved(true);
+  const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2500); };
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ background: "#1a1a2e" }}>
-
-      {/* Orbs */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/3 w-96 h-96 rounded-full opacity-15 blur-3xl animate-pulse"
-          style={{ background: "radial-gradient(circle, #7c3aed, transparent)" }} />
-        <div className="absolute bottom-0 right-1/4 w-64 h-64 rounded-full opacity-10 blur-3xl animate-pulse"
-          style={{ background: "radial-gradient(circle, #0ea5e9, transparent)", animationDelay: "2s" }} />
-      </div>
-      <div className="absolute inset-0 opacity-5 pointer-events-none"
-        style={{ backgroundImage: "linear-gradient(#a855f7 1px, transparent 1px), linear-gradient(90deg, #a855f7 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
-
-      {/* Nav */}
-      <nav className="relative z-10 flex items-center justify-between px-8 py-4"
-        style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(12px)" }}>
+    <CRTFrame>
+      <nav className="relative z-10 flex items-center justify-between px-8 py-4 border-b-2 border-balatro-card-edge bg-black/40 backdrop-blur-md">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#ef4444" }} />
-            <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#f59e0b" }} />
-            <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#22c55e" }} />
+            <span className="w-2.5 h-2.5 rounded-full bg-balatro-red" />
+            <span className="w-2.5 h-2.5 rounded-full bg-balatro-gold" />
+            <span className="w-2.5 h-2.5 rounded-full bg-balatro-green" />
           </div>
-          {onBack && (
-            <button onClick={onBack} className="flex items-center gap-1.5 text-xs font-bold tracking-widest uppercase transition-all duration-200"
-              style={{ color: "rgba(255,255,255,0.4)" }}
-              onMouseEnter={e => e.currentTarget.style.color = "#c084fc"}
-              onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.4)"}>
-              <ChevronLeft size={14} /> Voltar
-            </button>
-          )}
+          <button onClick={onBack} className="font-pixel text-[10px] tracking-[0.3em] uppercase text-balatro-text-dim hover:text-balatro-purple transition-colors flex items-center gap-1.5">
+            <ChevronLeft size={14} /> Voltar
+          </button>
+        </div>
+        <div className="font-pixel text-[10px] tracking-[0.3em] text-balatro-text-dim uppercase">
+          Spell Components
         </div>
         <div className="flex items-center gap-6">
-          <button onClick={onHome} className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase transition-all duration-200"
-            style={{ color: "rgba(255,255,255,0.5)" }}
-            onMouseEnter={e => e.currentTarget.style.color = "#c084fc"}
-            onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.5)"}>
+          <button onClick={onHome} className="font-pixel text-[10px] tracking-[0.3em] uppercase text-balatro-text-dim hover:text-balatro-purple transition-colors flex items-center gap-2">
             <Home size={14} /> Home
           </button>
-          <button style={{ color: "rgba(255,255,255,0.4)" }}
-            onMouseEnter={e => e.currentTarget.style.color = "#c084fc"}
-            onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.4)"}>
-            <UserCircle2 size={28} />
+          <button className="text-balatro-text-dim hover:text-balatro-purple transition-colors">
+            <UserCircle2 size={26} />
           </button>
         </div>
       </nav>
 
-      {/* Content */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-10 gap-6">
-
-        {/* Title */}
-        <div className="text-center space-y-1">
-          <h1 className="text-4xl font-black tracking-tight uppercase"
-            style={{ background: "linear-gradient(135deg, #f8fafc 0%, #c084fc 55%, #818cf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-            Importar Material
-          </h1>
-          <p className="text-xs font-semibold tracking-widest" style={{ color: "rgba(255,255,255,0.3)" }}>
-            (PDF, PPTX, TXT, CSV…)
+      <main className="relative z-10 flex-1 overflow-y-auto px-6 py-8 flex flex-col items-center gap-6">
+        <Motion.div
+          initial={{ y: -30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 280, damping: 22 }}
+          className="text-center space-y-2"
+        >
+          <p className="font-pixel text-[10px] tracking-[0.4em] text-balatro-purple text-glow-purple uppercase flex items-center justify-center gap-2">
+            <Sparkles size={14} /> Spell Components <Sparkles size={14} />
           </p>
-          <div className="w-24 h-0.5 mx-auto rounded-full mt-2" style={{ background: "linear-gradient(90deg, #7c3aed, #818cf8)" }} />
-        </div>
+          <h1 className="font-pixel text-3xl md:text-4xl text-balatro-text leading-tight"
+              style={{ filter: "drop-shadow(0 0 14px rgba(155,89,182,0.5))" }}>
+            IMPORTAR MATERIAL
+          </h1>
+          <p className="font-pixel text-[8px] tracking-[0.3em] text-balatro-text-dim uppercase">
+            ◆ {files.length} arquivos · Aceita: {ACCEPTED.join(" / ")} ◆
+          </p>
+        </Motion.div>
 
         {/* Drop zone */}
-        <div
-          className="w-full max-w-lg rounded-2xl transition-all duration-300 cursor-pointer"
-          style={{
-            background: dragging ? "rgba(124,58,237,0.1)" : "rgba(255,255,255,0.04)",
-            border: dragging ? "2px dashed #a855f7" : files.length ? "2px dashed rgba(124,58,237,0.4)" : "2px dashed rgba(255,255,255,0.12)",
-            backdropFilter: "blur(20px)",
-            boxShadow: dragging ? "0 0 40px rgba(168,85,247,0.2)" : "0 20px 50px rgba(0,0,0,0.4)",
-          }}
-          onDrop={onDrop}
-          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-          onDragLeave={() => setDragging(false)}
+        <Motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1 }}
           onClick={() => inputRef.current?.click()}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          className={cn(
+            "w-full max-w-2xl rounded-2xl border-4 border-dashed bg-balatro-card/60 backdrop-blur-md p-8 flex flex-col items-center gap-3 cursor-pointer transition-all",
+            dragging ? "border-balatro-purple scale-[1.02]" : "border-balatro-card-edge hover:border-balatro-purple/60",
+          )}
+          style={{ boxShadow: "0 8px 0 #000, 0 14px 24px rgba(0,0,0,0.5)" }}
         >
-          <div className="flex flex-col items-center justify-center gap-4 p-10">
-            {/* Upload icon */}
-            <div className="w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300"
-              style={{
-                background: dragging ? "rgba(168,85,247,0.2)" : "rgba(255,255,255,0.06)",
-                border: dragging ? "1px solid rgba(168,85,247,0.5)" : "1px solid rgba(255,255,255,0.1)",
-              }}>
-              <CloudUpload size={36} strokeWidth={1.5}
-                style={{ color: dragging ? "#c084fc" : "rgba(255,255,255,0.5)", transition: "color 0.3s" }} />
-            </div>
+          <Motion.div
+            animate={{ y: [0, -6, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="text-balatro-purple will-change-transform"
+          >
+            <CloudUpload size={48} strokeWidth={2} />
+          </Motion.div>
+          <p className="font-pixel text-sm tracking-[0.2em] uppercase text-balatro-text">
+            Arraste arquivos aqui
+          </p>
+          <p className="font-pixel text-[9px] tracking-[0.3em] uppercase text-balatro-text-dim">
+            ou clique para selecionar
+          </p>
+          <input
+            ref={inputRef}
+            type="file"
+            multiple
+            accept={ACCEPTED.join(",")}
+            className="hidden"
+            onChange={(e) => addFiles(e.target.files)}
+          />
+        </Motion.div>
 
-            <div className="text-center space-y-1">
-              <p className="text-sm font-bold tracking-widest uppercase" style={{ color: "rgba(255,255,255,0.7)" }}>
-                Arrastar e Soltar
-              </p>
-              <p className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>ou</p>
-            </div>
+        {error && (
+          <Motion.div
+            initial={{ y: -10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="rounded-lg border-2 border-balatro-red bg-balatro-red/15 px-4 py-2 flex items-center gap-2"
+          >
+            <X size={14} className="text-balatro-red" />
+            <span className="font-pixel text-[10px] tracking-[0.2em] text-balatro-red uppercase">{error}</span>
+          </Motion.div>
+        )}
 
-            <button
-              onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}
-              className="px-6 py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase transition-all duration-300"
-              style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", color: "white", boxShadow: "0 8px 24px rgba(124,58,237,0.35)" }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 12px 32px rgba(124,58,237,0.5)"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(124,58,237,0.35)"; }}>
-              Selecionar Arquivo
-            </button>
-
-            {/* Format tags */}
-            <div className="flex items-center gap-2 flex-wrap justify-center" onClick={e => e.stopPropagation()}>
-              {["PDF","PPTX","TXT","CSV","DOCX"].map(f => (
-                <span key={f} className="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-md uppercase"
-                  style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.3)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                  {f}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <input ref={inputRef} type="file" multiple accept={ACCEPTED.join(",")} className="hidden"
-          onChange={e => { addFiles(e.target.files); e.target.value = ""; }} />
-
-        {/* Error */}
-        {error && <p className="text-xs font-semibold" style={{ color: "#f87171" }}>{error}</p>}
-
-        {/* File list */}
+        {/* Files list */}
         {files.length > 0 && (
-          <div className="w-full max-w-lg flex flex-col gap-2" onClick={e => e.stopPropagation()}>
-            {files.map(f => {
-              const ext = getExt(f.name);
-              const meta = FILE_ICONS[ext] || FILE_ICONS.txt;
+          <div className="w-full max-w-2xl flex flex-col gap-2">
+            {files.map((f, i) => {
+              const cfg = FILE_ICONS[getExt(f.name)] ?? FILE_ICONS.txt;
+              const FIcon = cfg.Icon;
               return (
-                <div key={f.name} className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                  <span style={{ color: meta.color }}>{meta.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold truncate" style={{ color: "rgba(255,255,255,0.8)" }}>{f.name}</p>
-                    <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>
-                      {meta.label} · {(f.size / 1024).toFixed(1)} KB
-                    </p>
+                <Motion.div
+                  key={f.name}
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="rounded-xl border-2 border-balatro-card-edge bg-balatro-card/80 backdrop-blur-md p-3 flex items-center gap-3"
+                  style={{ boxShadow: "0 6px 0 #000, 0 12px 20px rgba(0,0,0,0.5)" }}
+                >
+                  <div
+                    className="w-12 h-12 rounded-lg border-2 flex items-center justify-center flex-shrink-0"
+                    style={{ borderColor: cfg.color, color: cfg.color, background: `${cfg.color}15` }}
+                  >
+                    <FIcon size={22} />
                   </div>
-                  <button onClick={() => remove(f.name)} className="w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-200"
-                    style={{ color: "rgba(255,255,255,0.3)" }}
-                    onMouseEnter={e => { e.currentTarget.style.color = "#f87171"; e.currentTarget.style.background = "rgba(239,68,68,0.12)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.3)"; e.currentTarget.style.background = "transparent"; }}>
-                    <X size={12} />
+                  <div className="flex-1 min-w-0">
+                    <span
+                      className="font-pixel text-[8px] tracking-[0.2em] uppercase px-1.5 py-0.5 rounded mr-2"
+                      style={{ color: cfg.color, background: `${cfg.color}20` }}
+                    >
+                      {cfg.label}
+                    </span>
+                    <span className="text-sm text-balatro-text font-mono truncate">{f.name}</span>
+                    <p className="text-[10px] text-balatro-text-dim mt-0.5">{(f.size / 1024).toFixed(1)} KB</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => remove(f.name)}
+                    aria-label="Remover arquivo"
+                    className="w-8 h-8 rounded-lg border-2 border-balatro-card-edge text-balatro-text-dim hover:border-balatro-red hover:text-balatro-red transition-colors flex items-center justify-center"
+                  >
+                    <X size={14} />
                   </button>
-                </div>
+                </Motion.div>
               );
             })}
           </div>
         )}
 
-        {/* Salvar */}
-        <button
-          disabled={!files.length}
+        <Motion.button
           onClick={handleSave}
-          className="px-16 py-4 rounded-2xl text-sm font-black tracking-widest uppercase transition-all duration-300 flex items-center gap-3"
-          style={{
-            background: saved ? "linear-gradient(135deg, #059669, #0d9488)" : files.length ? "linear-gradient(135deg, #7c3aed, #6d28d9)" : "rgba(255,255,255,0.08)",
-            color: files.length ? "white" : "rgba(255,255,255,0.25)",
-            boxShadow: saved ? "0 12px 32px rgba(5,150,105,0.4)" : files.length ? "0 12px 32px rgba(124,58,237,0.4)" : "none",
-            cursor: files.length ? "pointer" : "not-allowed",
-            border: "1px solid rgba(255,255,255,0.08)",
-          }}
-          onMouseEnter={e => { if (files.length && !saved) { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 18px 40px rgba(124,58,237,0.55)"; } }}
-          onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = saved ? "0 12px 32px rgba(5,150,105,0.4)" : files.length ? "0 12px 32px rgba(124,58,237,0.4)" : "none"; }}>
-          {saved ? <><Check size={18} /> Material Salvo!</> : <><Save size={18} /> Salvar</>}
-        </button>
+          disabled={files.length === 0}
+          whileHover={files.length > 0 && { y: -3, scale: 1.03 }}
+          whileTap={files.length > 0 && { y: 2, scale: 0.98 }}
+          className={cn(
+            "px-12 py-4 rounded-2xl font-pixel text-sm tracking-[0.25em] uppercase border-b-4 flex items-center gap-3",
+            saved
+              ? "bg-balatro-green text-white border-green-900"
+              : files.length === 0
+                ? "bg-balatro-card-edge text-balatro-text-dim border-black opacity-50 cursor-not-allowed"
+                : "bg-balatro-purple text-white border-purple-950 hover:shadow-[0_0_32px_rgba(155,89,182,0.6)]",
+          )}
+        >
+          {saved ? <><Check size={18} /> Salvo!</> : <><Save size={18} /> Salvar Material</>}
+        </Motion.button>
       </main>
-    </div>
+    </CRTFrame>
   );
 }

@@ -1,263 +1,212 @@
 import { useState } from "react";
-import { Home, UserCircle2, ChevronLeft, Package, Check } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { motion as Motion } from "motion/react";
+import {
+  Home, UserCircle2, ChevronLeft, Package, Check, Clock, Layers, Power,
+} from "lucide-react";
+import { CRTFrame } from "@/components/balatro/CRTFrame";
+
+import { cn } from "@/lib/utils";
 
 const CARD_OPTIONS = [2, 3, 4, 5, 6];
 
-export default function InventoryPage({ onBack, onHome }) {
+export default function InventoryPage() {
+  const navigate = useNavigate();
+  const onHome = () => navigate("/");
+  const onBack = () => navigate(-1);
+
   const [startWithCards, setStartWithCards] = useState(true);
   const [maxCards, setMaxCards] = useState(4);
-  const [timeLimit, setTimeLimit] = useState("");
+  const [timeLimit, setTimeLimit] = useState(30);
   const [saved, setSaved] = useState(false);
+
+  const markDirty = () => setSaved(false);
 
   const handleSave = () => {
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
 
-  const handleChange = (setter) => (val) => {
-    setSaved(false);
-    setter(val);
-  };
-
   return (
-    <div
-      className="min-h-screen flex flex-col relative overflow-hidden"
-      style={{ background: "#1a1a2e" }}
-    >
-      {/* Background orbs */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div
-          className="absolute top-0 left-1/4 w-80 h-80 rounded-full opacity-15 blur-3xl animate-pulse"
-          style={{ background: "radial-gradient(circle, #6366f1, transparent)" }}
-        />
-        <div
-          className="absolute bottom-0 right-1/3 w-64 h-64 rounded-full opacity-12 blur-3xl animate-pulse"
-          style={{
-            background: "radial-gradient(circle, #22d3ee, transparent)",
-            animationDelay: "1.5s",
-          }}
-        />
-        <div
-          className="absolute top-1/2 right-0 w-56 h-56 rounded-full opacity-10 blur-3xl animate-pulse"
-          style={{
-            background: "radial-gradient(circle, #818cf8, transparent)",
-            animationDelay: "3s",
-          }}
-        />
-      </div>
+    <CRTFrame className="bg-balatro-bg-deep">
+      
 
-      {/* Grid overlay */}
-      <div
-        className="absolute inset-0 opacity-5 pointer-events-none"
-        style={{
-          backgroundImage:
-            "linear-gradient(#6366f1 1px, transparent 1px), linear-gradient(90deg, #6366f1 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
-
-      {/* Nav */}
-      <nav
-        className="relative z-10 flex items-center justify-between px-8 py-4"
-        style={{
-          background: "rgba(255,255,255,0.04)",
-          borderBottom: "1px solid rgba(255,255,255,0.07)",
-          backdropFilter: "blur(12px)",
-        }}
-      >
+      <nav className="relative z-10 flex items-center justify-between px-8 py-4 border-b-2 border-balatro-card-edge bg-black/40 backdrop-blur-md">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#ef4444" }} />
-            <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#f59e0b" }} />
-            <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#22c55e" }} />
+            <span className="w-2.5 h-2.5 rounded-full bg-balatro-red" />
+            <span className="w-2.5 h-2.5 rounded-full bg-balatro-gold" />
+            <span className="w-2.5 h-2.5 rounded-full bg-balatro-green" />
           </div>
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1.5 text-xs font-bold tracking-widest uppercase transition-all duration-200"
-            style={{ color: "rgba(255,255,255,0.4)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#818cf8")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.4)")}
-          >
+          <button onClick={onBack} className="font-pixel text-[10px] tracking-[0.3em] uppercase text-balatro-text-dim hover:text-balatro-purple transition-colors flex items-center gap-1.5">
             <ChevronLeft size={14} /> Voltar
           </button>
         </div>
+        <div className="font-pixel text-[10px] tracking-[0.3em] text-balatro-text-dim uppercase">
+          Joker Slots Setup
+        </div>
         <div className="flex items-center gap-6">
-          <button
-            onClick={onHome}
-            className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase transition-all duration-200"
-            style={{ color: "rgba(255,255,255,0.5)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#818cf8")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.5)")}
-          >
+          <button onClick={onHome} className="font-pixel text-[10px] tracking-[0.3em] uppercase text-balatro-text-dim hover:text-balatro-purple transition-colors flex items-center gap-2">
             <Home size={14} /> Home
           </button>
-          <button
-            style={{ color: "rgba(255,255,255,0.4)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#818cf8")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.4)")}
-          >
-            <UserCircle2 size={28} />
+          <button className="text-balatro-text-dim hover:text-balatro-purple transition-colors">
+            <UserCircle2 size={26} />
           </button>
         </div>
       </nav>
 
-      {/* Content */}
-      <main className="relative z-10 flex-1 flex flex-col items-center px-6 py-10 gap-8">
-        {/* Title */}
-        <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Package size={22} style={{ color: "#818cf8" }} />
-          </div>
-          <h1
-            className="text-4xl font-black tracking-tight uppercase"
-            style={{
-              background: "linear-gradient(135deg, #f8fafc 0%, #818cf8 50%, #22d3ee 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
-            Inventário Inicial
-          </h1>
-          <p
-            className="text-xs font-semibold tracking-[0.2em] uppercase"
-            style={{ color: "#818cf8" }}
-          >
-            Configure o inventário dos jogadores
-          </p>
-          <div
-            className="w-24 h-0.5 mx-auto rounded-full"
-            style={{ background: "linear-gradient(90deg, #6366f1, #22d3ee)" }}
-          />
-        </div>
-
-        {/* SIM / NÃO Toggle */}
-        <div className="w-full max-w-md flex flex-col gap-3">
-          <label
-            className="text-xs font-bold tracking-widest uppercase text-center"
-            style={{ color: "rgba(255,255,255,0.5)" }}
-          >
-            Inventário inicial: começar com cartas?
-          </label>
-          <div
-            className="flex rounded-2xl overflow-hidden"
-            style={{ border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)" }}
-          >
-            {[{ label: "Sim", value: true }, { label: "Não", value: false }].map(({ label, value }) => {
-              const active = startWithCards === value;
-              return (
-                <button
-                  key={label}
-                  onClick={() => handleChange(setStartWithCards)(value)}
-                  className="flex-1 py-3 text-sm font-black tracking-widest uppercase transition-all duration-300"
-                  style={{
-                    background: active
-                      ? "linear-gradient(135deg, #4f46e5, #6366f1)"
-                      : "transparent",
-                    color: active ? "#fff" : "rgba(255,255,255,0.35)",
-                    boxShadow: active ? "0 4px 20px rgba(99,102,241,0.4)" : "none",
-                  }}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Max Cards Selector */}
-        <div className="w-full max-w-md flex flex-col gap-4">
-          <label
-            className="text-xs font-bold tracking-widest uppercase text-center"
-            style={{ color: "rgba(255,255,255,0.5)" }}
-          >
-            Número máximo de cartas no inventário
-          </label>
-          <div className="flex items-center justify-center gap-4">
-            {CARD_OPTIONS.map((n) => {
-              const active = maxCards === n;
-              return (
-                <button
-                  key={n}
-                  onClick={() => handleChange(setMaxCards)(n)}
-                  className="w-12 h-12 rounded-full text-sm font-black transition-all duration-300 flex items-center justify-center"
-                  style={{
-                    background: active
-                      ? "linear-gradient(135deg, #4f46e5, #6366f1)"
-                      : "rgba(255,255,255,0.07)",
-                    color: active ? "#fff" : "rgba(255,255,255,0.4)",
-                    border: active
-                      ? "2px solid rgba(129,140,248,0.6)"
-                      : "2px solid rgba(255,255,255,0.08)",
-                    boxShadow: active ? "0 0 20px rgba(99,102,241,0.5)" : "none",
-                    transform: active ? "scale(1.12)" : "scale(1)",
-                  }}
-                >
-                  {n}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Time Limit Input */}
-        <div className="w-full max-w-md flex flex-col gap-3">
-          <label
-            className="text-xs font-bold tracking-widest uppercase text-center"
-            style={{ color: "rgba(255,255,255,0.5)" }}
-          >
-            Tempo máximo para resposta
-          </label>
-          <input
-            type="number"
-            min={0}
-            value={timeLimit}
-            onChange={(e) => handleChange(setTimeLimit)(e.target.value)}
-            placeholder="Digite aqui (segundos)..."
-            className="w-full rounded-2xl px-5 py-3.5 text-sm font-semibold outline-none transition-all duration-300"
-            style={{
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              color: "rgba(255,255,255,0.8)",
-              backdropFilter: "blur(8px)",
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.border = "1px solid rgba(99,102,241,0.6)";
-              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99,102,241,0.15)";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.border = "1px solid rgba(255,255,255,0.1)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
-          />
-        </div>
-
-        {/* Save Button */}
-        <button
-          onClick={handleSave}
-          className="px-14 py-4 rounded-2xl text-sm font-black tracking-widest uppercase transition-all duration-300 flex items-center gap-3"
-          style={{
-            background: saved
-              ? "linear-gradient(135deg, #059669, #0d9488)"
-              : "linear-gradient(135deg, #4f46e5, #6366f1)",
-            color: "white",
-            boxShadow: saved
-              ? "0 12px 32px rgba(5,150,105,0.4)"
-              : "0 12px 32px rgba(79,70,229,0.45)",
-            border: "1px solid rgba(255,255,255,0.15)",
-          }}
+      <main className="relative z-10 flex-1 overflow-y-auto px-6 py-8 flex flex-col items-center gap-6">
+        <Motion.div
+          initial={{ y: -30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 280, damping: 22 }}
+          className="text-center space-y-2"
         >
-          {saved ? (
-            <>
-              <Check size={18} /> Salvo!
-            </>
-          ) : (
-            <>
-              <Package size={18} /> Salvar
-            </>
+          <p className="font-pixel text-[10px] tracking-[0.4em] text-balatro-purple text-glow-purple uppercase flex items-center justify-center gap-2">
+            <Package size={14} /> Joker Slots <Package size={14} />
+          </p>
+          <h1 className="font-pixel text-3xl md:text-4xl text-balatro-text leading-tight"
+              style={{ filter: "drop-shadow(0 0 14px rgba(155,89,182,0.5))" }}>
+            INVENTÁRIO INICIAL
+          </h1>
+          <p className="font-pixel text-[8px] tracking-[0.3em] text-balatro-text-dim uppercase">
+            Configure os slots de power-ups dos alunos
+          </p>
+        </Motion.div>
+
+        {/* Cards container */}
+        <div className="w-full max-w-2xl flex flex-col gap-4">
+          {/* Toggle: começar com cartas */}
+          <Motion.div
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="rounded-xl border-2 border-balatro-card-edge bg-balatro-card/80 backdrop-blur-md p-5"
+            style={{ boxShadow: "0 8px 0 #000, 0 14px 24px rgba(0,0,0,0.5)" }}
+          >
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg border-2 border-balatro-purple bg-balatro-purple/15 flex items-center justify-center text-balatro-purple">
+                  <Power size={18} />
+                </div>
+                <div>
+                  <p className="font-pixel text-[10px] tracking-[0.2em] uppercase text-balatro-text">Iniciar com Cartas</p>
+                  <p className="text-[11px] text-balatro-text-dim">Alunos começam a sessão com power-ups</p>
+                </div>
+              </div>
+              <Toggle value={startWithCards} onChange={(v) => { markDirty(); setStartWithCards(v); }} />
+            </div>
+          </Motion.div>
+
+          {/* Quantidade max */}
+          <Motion.div
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.15 }}
+            className="rounded-xl border-2 border-balatro-card-edge bg-balatro-card/80 backdrop-blur-md p-5"
+            style={{ boxShadow: "0 8px 0 #000, 0 14px 24px rgba(0,0,0,0.5)" }}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg border-2 border-balatro-blue bg-balatro-blue/15 flex items-center justify-center text-balatro-blue">
+                <Layers size={18} />
+              </div>
+              <div className="flex-1">
+                <p className="font-pixel text-[10px] tracking-[0.2em] uppercase text-balatro-text">Limite Máximo (Y)</p>
+                <p className="text-[11px] text-balatro-text-dim">Quantos power-ups cada aluno pode ter</p>
+              </div>
+              <span className="font-pixel text-2xl text-balatro-blue text-glow-blue tabular-nums">{maxCards}</span>
+            </div>
+            <div className="grid grid-cols-5 gap-2">
+              {CARD_OPTIONS.map((n) => {
+                const active = n === maxCards;
+                return (
+                  <button
+                    key={n}
+                    onClick={() => { markDirty(); setMaxCards(n); }}
+                    className={cn(
+                      "py-3 rounded-lg border-2 font-pixel text-base transition-all",
+                      active
+                        ? "border-balatro-blue bg-balatro-blue/20 text-balatro-blue text-glow-blue"
+                        : "border-balatro-card-edge bg-balatro-bg-deep text-balatro-text-dim hover:border-balatro-blue/50",
+                    )}
+                  >
+                    {n}
+                  </button>
+                );
+              })}
+            </div>
+          </Motion.div>
+
+          {/* Tempo de resposta */}
+          <Motion.div
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="rounded-xl border-2 border-balatro-card-edge bg-balatro-card/80 backdrop-blur-md p-5"
+            style={{ boxShadow: "0 8px 0 #000, 0 14px 24px rgba(0,0,0,0.5)" }}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg border-2 border-balatro-gold bg-balatro-gold/15 flex items-center justify-center text-balatro-gold">
+                <Clock size={18} />
+              </div>
+              <div className="flex-1">
+                <p className="font-pixel text-[10px] tracking-[0.2em] uppercase text-balatro-text">Tempo de Resposta</p>
+                <p className="text-[11px] text-balatro-text-dim">Segundos por pergunta (padrão 30s)</p>
+              </div>
+              <span className="font-pixel text-2xl text-balatro-gold text-glow-gold tabular-nums">{timeLimit}s</span>
+            </div>
+            <input
+              type="range"
+              min={10}
+              max={120}
+              step={5}
+              value={timeLimit}
+              onChange={(e) => { markDirty(); setTimeLimit(Number(e.target.value)); }}
+              className="w-full h-2 rounded-full appearance-none cursor-pointer"
+              style={{
+                accentColor: "#f0c040",
+                background: `linear-gradient(to right, #f0c040 ${(timeLimit - 10) / 1.1}%, rgba(255,255,255,0.08) ${(timeLimit - 10) / 1.1}%)`,
+              }}
+            />
+            <div className="flex justify-between mt-1.5 font-pixel text-[8px] tracking-widest text-balatro-text-dim">
+              <span>10s</span>
+              <span>120s</span>
+            </div>
+          </Motion.div>
+        </div>
+
+        <Motion.button
+          onClick={handleSave}
+          whileHover={{ y: -3, scale: 1.03 }}
+          whileTap={{ y: 2, scale: 0.98 }}
+          className={cn(
+            "px-12 py-4 rounded-2xl font-pixel text-sm tracking-[0.25em] uppercase border-b-4 flex items-center gap-3",
+            saved
+              ? "bg-balatro-green text-white border-green-900"
+              : "bg-balatro-purple text-white border-purple-950 hover:shadow-[0_0_32px_rgba(155,89,182,0.6)]",
           )}
-        </button>
+        >
+          {saved ? <><Check size={18} /> Salvo!</> : <><Package size={18} /> Salvar Inventário</>}
+        </Motion.button>
       </main>
-    </div>
+    </CRTFrame>
+  );
+}
+
+function Toggle({ value, onChange }) {
+  return (
+    <button
+      onClick={() => onChange(!value)}
+      className={cn(
+        "relative w-14 h-7 rounded-full border-2 transition-colors",
+        value ? "bg-balatro-purple border-purple-900" : "bg-balatro-bg-deep border-balatro-card-edge",
+      )}
+    >
+      <Motion.span
+        animate={{ x: value ? 28 : 2 }}
+        transition={{ type: "spring", stiffness: 500, damping: 28 }}
+        className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white shadow-md"
+      />
+    </button>
   );
 }
