@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Spade, Heart, Diamond, Club } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { useQuality } from "@/features/settings/store/settingsStore";
+import { cn } from "@/lib/utils";
 
 
 export default function HomePage() {
@@ -180,7 +181,7 @@ function MenuButton({ children, onClick, primary = false, variant }) {
       whileHover={{ x: 6 }}
       whileTap={{ y: 2, scale: 0.98 }}
       transition={{ type: "spring", stiffness: 600, damping: 20 }}
-      className={`${base} ${styles}`}
+      className={cn(base, styles)}
     >
       {children}
       <span className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">▶</span>

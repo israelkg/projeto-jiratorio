@@ -13,23 +13,25 @@ const TOP_WRONG = [
 ];
 
 const PU_USAGE = [
-  { id: "tempo",   label: "+30s",       count: 12, color: "#009dff" },
-  { id: "dica",    label: "Dica",       count: 8,  color: "#f0c040" },
-  { id: "escudo",  label: "Escudo",     count: 5,  color: "#50c878" },
-  { id: "inverter",label: "Inverter",   count: 3,  color: "#9b59b6" },
+  { id: "tempo",    label: "+30s",     count: 12, color: "#009dff" },
+  { id: "dica",     label: "Dica",     count: 8,  color: "#f0c040" },
+  { id: "escudo",   label: "Escudo",   count: 5,  color: "#50c878" },
+  { id: "inverter", label: "Inverter", count: 3,  color: "#9b59b6" },
 ];
+
+const TOTAL_QUESTIONS = 12;
+const PU_MAX_COUNT = Math.max(...PU_USAGE.map((p) => p.count));
+const PU_TOTAL = PU_USAGE.reduce((sum, p) => sum + p.count, 0);
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const onHome = () => navigate("/");
-  const onBack = () => navigate(-1);
-
   const students = useStudentsStore((s) => s.students);
-  const totalQuestions = 12;
+
   const totalCorrect = students.reduce((sum, s) => sum + s.points, 0);
-  const accuracyAvg = totalCorrect > 0 ? Math.round((totalCorrect / (students.length * totalQuestions)) * 100) : 0;
+  const accuracyAvg = totalCorrect > 0
+    ? Math.round((totalCorrect / (students.length * TOTAL_QUESTIONS)) * 100)
+    : 0;
   const avgTime = 22;
-  const totalPUs = PU_USAGE.reduce((sum, p) => sum + p.count, 0);
 
   return (
     <CRTFrame>
@@ -40,7 +42,10 @@ export default function DashboardPage() {
             <span className="w-2.5 h-2.5 rounded-full bg-balatro-gold" />
             <span className="w-2.5 h-2.5 rounded-full bg-balatro-green" />
           </div>
-          <button onClick={onBack} className="font-pixel text-[10px] tracking-[0.3em] uppercase text-balatro-text-dim hover:text-balatro-blue transition-colors flex items-center gap-1.5">
+          <button
+            onClick={() => navigate(-1)}
+            className="font-pixel text-[10px] tracking-[0.3em] uppercase text-balatro-text-dim hover:text-balatro-blue transition-colors flex items-center gap-1.5"
+          >
             <ChevronLeft size={14} /> Voltar
           </button>
         </div>
@@ -48,10 +53,16 @@ export default function DashboardPage() {
           Run Stats
         </div>
         <div className="flex items-center gap-6">
-          <button onClick={onHome} className="font-pixel text-[10px] tracking-[0.3em] uppercase text-balatro-text-dim hover:text-balatro-blue transition-colors flex items-center gap-2">
+          <button
+            onClick={() => navigate("/")}
+            className="font-pixel text-[10px] tracking-[0.3em] uppercase text-balatro-text-dim hover:text-balatro-blue transition-colors flex items-center gap-2"
+          >
             <Home size={14} /> Home
           </button>
-          <button className="text-balatro-text-dim hover:text-balatro-blue transition-colors">
+          <button
+            aria-label="Perfil"
+            className="text-balatro-text-dim hover:text-balatro-blue transition-colors"
+          >
             <UserCircle2 size={26} />
           </button>
         </div>
@@ -67,18 +78,20 @@ export default function DashboardPage() {
           <p className="font-pixel text-[10px] tracking-[0.4em] text-balatro-blue text-glow-blue uppercase flex items-center justify-center gap-2">
             <BarChart3 size={14} /> Run Stats <BarChart3 size={14} />
           </p>
-          <h1 className="font-pixel text-3xl md:text-4xl text-balatro-text leading-tight"
-              style={{ filter: "drop-shadow(0 0 14px rgba(0,157,255,0.5))" }}>
+          <h1
+            className="font-pixel text-3xl md:text-4xl text-balatro-text leading-tight"
+            style={{ filter: "drop-shadow(0 0 14px rgba(0,157,255,0.5))" }}
+          >
             DASHBOARD
           </h1>
         </Motion.div>
 
         {/* KPI Cards */}
         <div className="w-full max-w-5xl grid grid-cols-2 md:grid-cols-4 gap-3">
-          <KPICard Icon={Target}         label="Acerto Médio" value={`${accuracyAvg}%`} color="#50c878" delay={0.1} />
-          <KPICard Icon={Clock}           label="Tempo Médio"   value={`${avgTime}s`}    color="#f0c040" delay={0.15} />
-          <KPICard Icon={Zap}             label="Power-Ups"     value={totalPUs}        color="#9b59b6" delay={0.2} />
-          <KPICard Icon={AlertTriangle}   label="Mais Erradas"  value={TOP_WRONG.length} color="#fe5f55" delay={0.25} />
+          <KPICard Icon={Target}        label="Acerto Médio" value={`${accuracyAvg}%`} color="#50c878" delay={0.1} />
+          <KPICard Icon={Clock}         label="Tempo Médio"  value={`${avgTime}s`}     color="#f0c040" delay={0.15} />
+          <KPICard Icon={Zap}           label="Power-Ups"    value={PU_TOTAL}          color="#9b59b6" delay={0.2} />
+          <KPICard Icon={AlertTriangle} label="Mais Erradas" value={TOP_WRONG.length}  color="#fe5f55" delay={0.25} />
         </div>
 
         <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -98,7 +111,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex flex-col gap-2 p-4">
               {students.map((s) => {
-                const pct = Math.min(100, (s.points / totalQuestions) * 100);
+                const pct = Math.min(100, (s.points / TOTAL_QUESTIONS) * 100);
                 return (
                   <div key={s.id}>
                     <div className="flex justify-between mb-1">
@@ -136,8 +149,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex flex-col gap-3 p-4">
               {PU_USAGE.map((p) => {
-                const max = Math.max(...PU_USAGE.map((x) => x.count));
-                const pct = (p.count / max) * 100;
+                const pct = (p.count / PU_MAX_COUNT) * 100;
                 return (
                   <div key={p.id}>
                     <div className="flex justify-between mb-1">
@@ -187,7 +199,10 @@ export default function DashboardPage() {
               >
                 <span className="font-pixel text-base text-balatro-red tabular-nums w-10">#{q.id}</span>
                 <p className="flex-1 text-sm text-balatro-text">{q.text}</p>
-                <span className="font-pixel text-base text-balatro-red tabular-nums" style={{ textShadow: "0 0 8px #fe5f55" }}>
+                <span
+                  className="font-pixel text-base text-balatro-red tabular-nums"
+                  style={{ textShadow: "0 0 8px #fe5f55" }}
+                >
                   {q.wrongPct}%
                 </span>
               </div>

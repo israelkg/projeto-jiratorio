@@ -108,7 +108,7 @@ export default function ImportPage() {
               <div className="w-16 h-16 rounded-xl border-4 border-balatro-green bg-balatro-green/15 flex items-center justify-center text-balatro-green">
                 <CheckCircle2 size={32} />
               </div>
-              <p className="font-pixel text-[10px] tracking-[0.2em] uppercase text-balatro-green text-glow-blue">Arquivo Pronto</p>
+              <p className="font-pixel text-[10px] tracking-[0.2em] uppercase text-balatro-green" style={{ textShadow: "0 0 12px rgba(80,200,120,0.6)" }}>Arquivo Pronto</p>
               <div className="flex items-center gap-3 px-4 py-2 rounded-lg border-2 border-balatro-card-edge bg-balatro-bg-deep">
                 <FileText size={18} className="text-balatro-green" />
                 <span className="text-sm text-balatro-text font-mono">{file.name}</span>

@@ -5,10 +5,7 @@ import { Home, UserCircle2, Dice5, Skull, ArrowRight } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { useStudentsStore } from "@/features/students/store/studentsStore";
 import { useRoundStore } from "@/features/round/store/roundStore";
-
-function pickRandom(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
+import { pickRandom } from "@/lib/random";
 
 export default function PassQuestionPage() {
   const navigate = useNavigate();
@@ -27,6 +24,10 @@ export default function PassQuestionPage() {
 
   useEffect(() => {
     const eligible = students.filter((s) => s.id !== inquisitorId && s.id !== victimId);
+    if (eligible.length === 0) {
+      setPhase("empty");
+      return undefined;
+    }
     let count = 0;
     tickRef.current = setInterval(() => {
       setTickName(pickRandom(eligible).name);
@@ -84,6 +85,22 @@ export default function PassQuestionPage() {
             Sorteando próximo aluno…
           </p>
         </Motion.div>
+
+        {phase === "empty" && (
+          <div className="flex flex-col items-center gap-4">
+            <p className="font-pixel text-[12px] tracking-[0.2em] text-balatro-red text-glow-red uppercase text-center">
+              Sem alunos elegíveis para repasse
+            </p>
+            <Motion.button
+              onClick={() => navigate("/round-question")}
+              whileHover={{ y: -2, scale: 1.03 }}
+              whileTap={{ y: 2, scale: 0.98 }}
+              className="px-8 py-3 rounded-xl bg-balatro-card text-balatro-text font-pixel text-[10px] tracking-[0.25em] uppercase border-b-4 border-black"
+            >
+              Voltar
+            </Motion.button>
+          </div>
+        )}
 
         {phase === "rolling" && (
           <div className="flex flex-col items-center gap-4">

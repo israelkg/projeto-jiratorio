@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 import {
@@ -27,14 +27,18 @@ export default function GenerateQuestionsPage() {
   const [quantity, setQuantity] = useState(10);
   const [difficulty, setDifficulty] = useState("medio");
   const [types, setTypes] = useState({ multipla: true, verdadeiro: false, dissertativa: false });
-  const [generated, setGenerated] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const navTimeoutRef = useRef(null);
+
+  useEffect(() => () => {
+    if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
+  }, []);
 
   const toggleType = (id) => setTypes((t) => ({ ...t, [id]: !t[id] }));
 
   const handleGenerate = () => {
     setGenerating(true);
-    setTimeout(() => { setGenerating(false); setGenerated(true); navigate("/loading"); }, 600);
+    navTimeoutRef.current = setTimeout(() => navigate("/loading"), 600);
   };
 
   return (
@@ -193,12 +197,10 @@ export default function GenerateQuestionsPage() {
             "px-12 py-4 rounded-2xl font-pixel text-sm tracking-[0.25em] uppercase border-b-4 flex items-center gap-3",
             generating
               ? "bg-balatro-card-edge text-balatro-text-dim border-black cursor-wait"
-              : generated
-                ? "bg-balatro-green text-white border-green-900"
-                : "bg-balatro-purple text-white border-purple-950 hover:shadow-[0_0_32px_rgba(155,89,182,0.6)]",
+              : "bg-balatro-purple text-white border-purple-950 hover:shadow-[0_0_32px_rgba(155,89,182,0.6)]",
           )}
         >
-          {generating ? "Gerando…" : generated ? <><Check size={18} /> Geradas!</> : <><Sparkles size={18} /> Gerar Perguntas</>}
+          {generating ? <><Check size={18} /> Gerando…</> : <><Sparkles size={18} /> Gerar Perguntas</>}
         </Motion.button>
       </main>
     </CRTFrame>

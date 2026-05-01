@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 import {
@@ -5,6 +6,7 @@ import {
   ChevronRight, CheckCircle, XCircle, Volume2, Sparkles, Star,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
+import { PowerUpModal } from "@/features/round/components/PowerUpModal";
 
 import { cn } from "@/lib/utils";
 
@@ -43,7 +45,15 @@ export default function RoundFinishedPage({
   roundNumber = 20,
 }) {
   const navigate = useNavigate();
-  const onHome = () => navigate("/");
+  const [puModal, setPuModal] = useState(false);
+
+  const handleAction = (action) => {
+    if (action.id === "powerup") {
+      setPuModal(true);
+      return;
+    }
+    if (action.route) navigate(action.route);
+  };
 
   return (
     <CRTFrame className="bg-balatro-bg-deep">
@@ -59,10 +69,10 @@ export default function RoundFinishedPage({
           Round End · {String(roundNumber).padStart(2, "0")}
         </div>
         <div className="flex items-center gap-6">
-          <button onClick={onHome} className="font-pixel text-[10px] tracking-[0.3em] uppercase text-balatro-text-dim hover:text-balatro-purple transition-colors flex items-center gap-2">
+          <button onClick={() => navigate("/")} className="font-pixel text-[10px] tracking-[0.3em] uppercase text-balatro-text-dim hover:text-balatro-purple transition-colors flex items-center gap-2">
             <Home size={14} /> Home
           </button>
-          <button className="text-balatro-text-dim hover:text-balatro-purple transition-colors">
+          <button aria-label="Perfil" className="text-balatro-text-dim hover:text-balatro-purple transition-colors">
             <UserCircle2 size={26} />
           </button>
         </div>
@@ -165,7 +175,7 @@ export default function RoundFinishedPage({
             return (
               <Motion.button
                 key={action.id}
-                onClick={() => action.route && navigate(action.route)}
+                onClick={() => handleAction(action)}
                 whileHover={{ y: -3, scale: 1.02 }}
                 whileTap={{ y: 2, scale: 0.98 }}
                 className={cn(
@@ -180,6 +190,7 @@ export default function RoundFinishedPage({
           })}
         </Motion.div>
       </main>
+      <PowerUpModal open={puModal} onClose={() => setPuModal(false)} />
     </CRTFrame>
   );
 }

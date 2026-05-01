@@ -67,5 +67,5 @@ export const useSettingsStore = create(
 
 export const useQuality = () => {
   const quality = useSettingsStore((s) => s.quality);
-  return QUALITY_PRESETS[quality];
+  return QUALITY_PRESETS[quality] ?? QUALITY_PRESETS[QUALITY.MEDIUM];
 };

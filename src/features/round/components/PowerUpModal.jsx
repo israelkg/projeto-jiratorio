@@ -1,3 +1,4 @@
+import { useEffect, useId, useRef } from "react";
 import { motion as Motion, AnimatePresence } from "motion/react";
 import { X, Zap, Eye, Shield, Clock, Shuffle, RefreshCw, SkipForward, Users, Hand } from "lucide-react";
 import { useStudentsStore } from "@/features/students/store/studentsStore";
@@ -21,8 +22,21 @@ export function PowerUpModal({ open, onClose, onActivate }) {
   const consumePowerUp = useStudentsStore((s) => s.consumePowerUp);
   const addTime = useRoundStore((s) => s.addTime);
   const swapRoles = useRoundStore((s) => s.swapRoles);
+  const titleId = useId();
+  const closeBtnRef = useRef(null);
 
   const studentsWithPowerUps = students.filter((s) => s.inventory.length > 0);
+
+  // ESC fecha + focus inicial no botão fechar
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    closeBtnRef.current?.focus();
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
 
   const handleActivate = (studentId, powerUpId) => {
     consumePowerUp(studentId, powerUpId);
@@ -48,20 +62,24 @@ export function PowerUpModal({ open, onClose, onActivate }) {
             exit={{ scale: 0.9, y: 20, opacity: 0 }}
             transition={{ type: "spring", stiffness: 280, damping: 24 }}
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
             className="w-full max-w-2xl rounded-2xl border-4 border-balatro-purple bg-balatro-card overflow-hidden"
             style={{ boxShadow: "0 18px 0 #000, 0 28px 60px rgba(155,89,182,0.5)" }}
           >
             <div className="flex items-center justify-between px-5 py-3 border-b-2 border-balatro-card-edge bg-black/30">
               <div className="flex items-center gap-2">
                 <Zap size={14} className="text-balatro-purple" />
-                <span className="font-pixel text-[10px] tracking-[0.3em] text-balatro-purple text-glow-purple uppercase">
+                <span id={titleId} className="font-pixel text-[10px] tracking-[0.3em] text-balatro-purple text-glow-purple uppercase">
                   Ativar Power-Up
                 </span>
               </div>
               <button
+                ref={closeBtnRef}
                 onClick={onClose}
-                aria-label="Fechar"
-                className="text-balatro-text-dim hover:text-balatro-red transition-colors"
+                aria-label="Fechar modal"
+                className="text-balatro-text-dim hover:text-balatro-red transition-colors focus-visible:outline-2 focus-visible:outline-balatro-red"
               >
                 <X size={18} />
               </button>

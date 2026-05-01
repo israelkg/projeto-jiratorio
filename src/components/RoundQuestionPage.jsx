@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion as Motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -40,6 +40,11 @@ export default function RoundQuestionPage({ targetScore = 1500 }) {
 
   const [reading, setReading] = useState(false);
   const [puModal, setPuModal] = useState(false);
+  const navTimeoutRef = useRef(null);
+
+  useEffect(() => () => {
+    if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
+  }, []);
 
   const inquisitor = students.find((s) => s.id === inquisitorId);
   const victim = students.find((s) => s.id === victimId);
@@ -60,7 +65,7 @@ export default function RoundQuestionPage({ targetScore = 1500 }) {
     givePowerUp(victim.id, drawn);
     addHistory({ actor: victim.name, event: `ganhou power-up: ${drawn}`, type: "powerup" });
     setResult("correct");
-    setTimeout(() => navigate("/round-finished"), 1500);
+    navTimeoutRef.current = setTimeout(() => navigate("/round-finished"), 1500);
   };
 
   const handleWrong = () => {

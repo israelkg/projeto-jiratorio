@@ -5,22 +5,7 @@ import { Home, UserCircle2, ChevronLeft, Volume2, Skull, Dice5, ArrowRight } fro
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { useStudentsStore } from "@/features/students/store/studentsStore";
 import { useRoundStore } from "@/features/round/store/roundStore";
-
-function pickRandom(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-function pickWeighted(students) {
-  // Penaliza vítimas anteriores: -20% prob por participação
-  const weights = students.map((s) => Math.max(0.1, 1 - s.victimCount * 0.2));
-  const total = weights.reduce((a, b) => a + b, 0);
-  let r = Math.random() * total;
-  for (let i = 0; i < students.length; i++) {
-    r -= weights[i];
-    if (r <= 0) return students[i];
-  }
-  return students[students.length - 1];
-}
+import { pickRandom, pickWeighted } from "@/lib/random";
 
 export default function SortDrawPage() {
   const navigate = useNavigate();
