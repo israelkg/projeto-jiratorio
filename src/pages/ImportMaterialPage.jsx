@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 import {
   CloudUpload, Home, UserCircle2, ChevronLeft,
-  FileText, FileSpreadsheet, Presentation, Check, X, Save, Sparkles,
+  FileText, FileSpreadsheet, Presentation, Check, X, Save, Sparkles, Loader2,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { BalatroButton } from "@/components/balatro/BalatroButton";
+import { uploadMaterial } from "@/features/materials/api";
 import { cn } from "@/lib/utils";
 
 const ACCEPTED = [".pdf", ".pptx", ".txt", ".csv", ".docx"];
@@ -19,6 +20,14 @@ const FILE_ICONS = {
   docx: { Icon: FileText,        color: "#009dff", label: "DOCX" },
 };
 
+const STATUS_COLOR = {
+  pending:    "#cbd5e1",
+  uploading:  "#009dff",
+  processing: "#f0c040",
+  ready:      "#50c878",
+  failed:     "#fe5f55",
+};
+
 function getExt(name) {
   return name.split(".").pop().toLowerCase();
 }
@@ -29,13 +38,11 @@ export default function ImportMaterialPage() {
   const onBack = () => navigate(-1);
 
   const [dragging, setDragging] = useState(false);
-  const [files, setFiles] = useState([]);
+  const [entries, setEntries] = useState([]);
   const [error, setError] = useState("");
-  const [saved, setSaved] = useState(false);
   const inputRef = useRef(null);
 
   const addFiles = (incoming) => {
-    setSaved(false);
     const valid = [];
     const invalid = [];
     Array.from(incoming).forEach((f) => {
@@ -43,11 +50,14 @@ export default function ImportMaterialPage() {
       if (ACCEPTED.includes(ext)) valid.push(f);
       else invalid.push(f.name);
     });
-    if (invalid.length) setError(`Formato não suportado: ${invalid.join(", ")}`);
-    else setError("");
-    setFiles((prev) => {
-      const names = prev.map((f) => f.name);
-      return [...prev, ...valid.filter((f) => !names.includes(f.name))];
+    setError(invalid.length ? `Formato não suportado: ${invalid.join(", ")}` : "");
+
+    setEntries((prev) => {
+      const names = prev.map((e) => e.file.name);
+      const fresh = valid
+        .filter((f) => !names.includes(f.name))
+        .map((file) => ({ file, status: "pending", id: null, error: null }));
+      return [...prev, ...fresh];
     });
   };
 
@@ -59,8 +69,38 @@ export default function ImportMaterialPage() {
 
   const onDragOver = (e) => { e.preventDefault(); setDragging(true); };
   const onDragLeave = () => setDragging(false);
-  const remove = (name) => { setSaved(false); setFiles((f) => f.filter((x) => x.name !== name)); };
-  const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2500); };
+
+  const remove = (name) => {
+    setEntries((es) => es.filter((e) => e.file.name !== name));
+  };
+
+  const setEntryState = (name, patch) => {
+    setEntries((es) => es.map((e) => (e.file.name === name ? { ...e, ...patch } : e)));
+  };
+
+  const handleUploadAll = async () => {
+    const pending = entries.filter((e) => e.status === "pending" || e.status === "failed");
+    for (const entry of pending) {
+      setEntryState(entry.file.name, { status: "uploading", error: null });
+      try {
+        const result = await uploadMaterial(entry.file);
+        setEntryState(entry.file.name, {
+          status: result.status,
+          id: result.id,
+          error: result.parse_error,
+        });
+      } catch (err) {
+        setEntryState(entry.file.name, {
+          status: "failed",
+          error: err.message ?? "Falha no upload",
+        });
+      }
+    }
+  };
+
+  const pendingCount = entries.filter((e) => e.status === "pending" || e.status === "failed").length;
+  const allReady = entries.length > 0 && entries.every((e) => e.status === "ready");
+  const uploading = entries.some((e) => e.status === "uploading");
 
   return (
     <CRTFrame>
@@ -103,11 +143,10 @@ export default function ImportMaterialPage() {
             IMPORTAR MATERIAL
           </h1>
           <p className="font-pixel text-[8px] tracking-[0.3em] text-balatro-text-dim uppercase">
-            ◆ {files.length} arquivos · Aceita: {ACCEPTED.join(" / ")} ◆
+            ◆ {entries.length} arquivos · Aceita: {ACCEPTED.join(" / ")} ◆
           </p>
         </Motion.div>
 
-        {/* Drop zone */}
         <Motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -156,15 +195,15 @@ export default function ImportMaterialPage() {
           </Motion.div>
         )}
 
-        {/* Files list */}
-        {files.length > 0 && (
+        {entries.length > 0 && (
           <div className="w-full max-w-2xl flex flex-col gap-2">
-            {files.map((f, i) => {
-              const cfg = FILE_ICONS[getExt(f.name)] ?? FILE_ICONS.txt;
+            {entries.map((entry, i) => {
+              const cfg = FILE_ICONS[getExt(entry.file.name)] ?? FILE_ICONS.txt;
               const FIcon = cfg.Icon;
+              const statusColor = STATUS_COLOR[entry.status] ?? STATUS_COLOR.pending;
               return (
                 <Motion.div
-                  key={f.name}
+                  key={entry.file.name}
                   initial={{ x: -20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: i * 0.05 }}
@@ -172,26 +211,39 @@ export default function ImportMaterialPage() {
                   style={{ boxShadow: "0 6px 0 #000, 0 12px 20px rgba(0,0,0,0.5)" }}
                 >
                   <div
-                    className="w-12 h-12 rounded-lg border-2 flex items-center justify-center flex-shrink-0"
+                    className="w-12 h-12 rounded-lg border-2 flex items-center justify-center shrink-0"
                     style={{ borderColor: cfg.color, color: cfg.color, background: `${cfg.color}15` }}
                   >
                     <FIcon size={22} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span
-                      className="font-pixel text-[8px] tracking-[0.2em] uppercase px-1.5 py-0.5 rounded mr-2"
-                      style={{ color: cfg.color, background: `${cfg.color}20` }}
-                    >
-                      {cfg.label}
-                    </span>
-                    <span className="text-sm text-balatro-text font-mono truncate">{f.name}</span>
-                    <p className="text-[10px] text-balatro-text-dim mt-0.5">{(f.size / 1024).toFixed(1)} KB</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        className="font-pixel text-[8px] tracking-[0.2em] uppercase px-1.5 py-0.5 rounded"
+                        style={{ color: cfg.color, background: `${cfg.color}20` }}
+                      >
+                        {cfg.label}
+                      </span>
+                      <span
+                        className="font-pixel text-[8px] tracking-[0.2em] uppercase px-1.5 py-0.5 rounded flex items-center gap-1"
+                        style={{ color: statusColor, background: `${statusColor}20` }}
+                      >
+                        {entry.status === "uploading" && <Loader2 size={10} className="animate-spin" />}
+                        {entry.status}
+                      </span>
+                      <span className="text-sm text-balatro-text font-mono truncate">{entry.file.name}</span>
+                    </div>
+                    <p className="text-[10px] text-balatro-text-dim mt-0.5">
+                      {(entry.file.size / 1024).toFixed(1)} KB
+                      {entry.error && <span className="text-balatro-red ml-2">· {entry.error}</span>}
+                    </p>
                   </div>
                   <button
                     type="button"
-                    onClick={() => remove(f.name)}
+                    onClick={() => remove(entry.file.name)}
+                    disabled={entry.status === "uploading"}
                     aria-label="Remover arquivo"
-                    className="w-8 h-8 rounded-lg border-2 border-balatro-card-edge text-balatro-text-dim hover:border-balatro-red hover:text-balatro-red transition-colors flex items-center justify-center"
+                    className="w-8 h-8 rounded-lg border-2 border-balatro-card-edge text-balatro-text-dim hover:border-balatro-red hover:text-balatro-red transition-colors flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <X size={14} />
                   </button>
@@ -202,11 +254,17 @@ export default function ImportMaterialPage() {
         )}
 
         <BalatroButton
-          onClick={handleSave}
-          disabled={files.length === 0}
-          variant={saved ? "green" : "purple"}
+          onClick={handleUploadAll}
+          disabled={entries.length === 0 || pendingCount === 0 || uploading}
+          variant={allReady ? "green" : "purple"}
         >
-          {saved ? <><Check size={18} /> Salvo!</> : <><Save size={18} /> Salvar Material</>}
+          {uploading ? (
+            <><Loader2 size={18} className="animate-spin" /> Enviando...</>
+          ) : allReady ? (
+            <><Check size={18} /> Todos prontos!</>
+          ) : (
+            <><Save size={18} /> Enviar Material ({pendingCount})</>
+          )}
         </BalatroButton>
       </main>
     </CRTFrame>
