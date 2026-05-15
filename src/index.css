@@ -47,6 +47,30 @@
 
 /* === Balatro CRT + utility classes === */
 @layer utilities {
+  .balatro-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: var(--color-balatro-card);
+    border: 2px solid var(--color-balatro-card-edge);
+    border-bottom-width: 4px;
+    border-radius: 0.75rem;
+    color: var(--color-balatro-text, #f5f5f0);
+    font-family: var(--font-pixel, monospace);
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .balatro-input::placeholder {
+    color: var(--color-balatro-text-dim, #6b7280);
+    text-transform: none;
+    letter-spacing: 0.05em;
+  }
+  .balatro-input:focus-visible {
+    border-color: var(--color-balatro-gold);
+    box-shadow: 0 0 0 2px rgba(245, 192, 64, 0.3);
+  }
+
   .crt-scanlines {
     position: relative;
   }

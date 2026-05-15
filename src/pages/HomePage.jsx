@@ -3,14 +3,21 @@ import { useNavigate } from "react-router-dom";
 import { Spade, Heart, Diamond, Club } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { useQuality } from "@/features/settings/store/settingsStore";
+import { useAuthStore } from "@/features/auth/store/authStore";
 import { cn } from "@/lib/utils";
 
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.clear);
   const onNewSession = () => navigate("/create");
   const onLoadSession = () => navigate("/load-session");
   const onOptions = () => navigate("/settings");
+  const onLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
   return (
     <CRTFrame className="bg-balatro-bg-deep">
       
@@ -52,7 +59,7 @@ export default function HomePage() {
               <Club size={18} fill="currentColor" />
               <span>Opções</span>
             </MenuButton>
-            <MenuButton variant="ghost">
+            <MenuButton variant="ghost" onClick={onLogout}>
               <Heart size={18} fill="currentColor" />
               <span>Sair</span>
             </MenuButton>
@@ -64,7 +71,7 @@ export default function HomePage() {
             transition={{ delay: 0.8 }}
             className="font-pixel text-[8px] tracking-[0.4em] text-balatro-text-dim uppercase"
           >
-            v0.1.0 · Press Start
+            {user ? `${user.name} · ${user.role}` : "v0.1.0 · Press Start"}
           </Motion.p>
         </div>
 
