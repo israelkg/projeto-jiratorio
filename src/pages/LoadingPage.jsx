@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion as Motion } from "motion/react";
-import { Home, UserCircle2, Skull, Sparkles } from "lucide-react";
+import { Home, UserCircle2, Skull, Sparkles, AlertTriangle } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { FloatingSuits } from "@/components/balatro/FloatingSuits";
 import { useQuality } from "@/features/settings/store/settingsStore";
+import { generateQuestionsFromMaterial } from "@/features/questions/api";
+import { useGenerationStore } from "@/features/questions/store/generationStore";
 
 const PHASES = [
   { label: "Analisando o material", color: "#009dff" },
@@ -16,20 +18,54 @@ export default function LoadingPage() {
   const navigate = useNavigate();
   const onHome = () => navigate("/");
   const q = useQuality();
+  const request = useGenerationStore((s) => s.request);
+  const setResult = useGenerationStore((s) => s.setResult);
+  const clearRequest = useGenerationStore((s) => s.clear);
+
   const [progress, setProgress] = useState(0);
   const [phase, setPhase] = useState(0);
+  const [error, setError] = useState(null);
+  const apiDoneRef = useRef(false);
   const navTimeoutRef = useRef(null);
 
   useEffect(() => {
+    if (!request) {
+      navigate("/generate", { replace: true });
+      return;
+    }
+
+    let cancelled = false;
+    generateQuestionsFromMaterial(request.materialId, {
+      quantity: request.quantity,
+      difficulty: request.difficulty,
+      types: request.types,
+    })
+      .then((data) => {
+        if (cancelled) return;
+        setResult(data);
+        apiDoneRef.current = true;
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err.message ?? "Falha na geração");
+      });
+
+    return () => { cancelled = true; };
+  }, [request, setResult, navigate]);
+
+  useEffect(() => {
+    if (error) return;
     const interval = setInterval(() => {
       setProgress((p) => {
-        const next = p + 0.8;
+        const next = Math.min(p + 0.8, apiDoneRef.current ? 100 : 92);
         if (next >= 33 && next < 34) setPhase(1);
         if (next >= 66 && next < 67) setPhase(2);
-        if (next >= 100) {
+        if (next >= 100 && apiDoneRef.current) {
           clearInterval(interval);
-          navTimeoutRef.current = setTimeout(() => navigate("/list"), 800);
-          return 100;
+          navTimeoutRef.current = setTimeout(() => {
+            clearRequest();
+            navigate("/list");
+          }, 600);
         }
         return next;
       });
@@ -38,7 +74,7 @@ export default function LoadingPage() {
       clearInterval(interval);
       if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
     };
-  }, [navigate]);
+  }, [error, clearRequest, navigate]);
 
   const done = progress >= 100;
   const cur = PHASES[phase];
@@ -83,7 +119,6 @@ export default function LoadingPage() {
           </h1>
         </Motion.div>
 
-        {/* Spinning card — 3D só em MEDIUM/ULTRA */}
         <Motion.div
           animate={q.decorative3D ? { rotateY: 360 } : { opacity: [0.85, 1, 0.85] }}
           transition={{
@@ -104,44 +139,58 @@ export default function LoadingPage() {
           </Motion.div>
         </Motion.div>
 
-        {/* Progress bar */}
-        <div className="w-full max-w-md flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <Motion.span
-              key={phase}
-              initial={{ x: -10, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              className="font-pixel text-[10px] tracking-[0.2em] uppercase"
-              style={{ color: cur.color, textShadow: `0 0 8px ${cur.color}` }}
+        {error ? (
+          <div className="max-w-md flex flex-col items-center gap-4 p-6 rounded-xl border-2 border-balatro-red bg-balatro-red/10">
+            <AlertTriangle size={32} className="text-balatro-red" />
+            <p className="font-pixel text-[10px] tracking-[0.2em] text-balatro-red uppercase text-center">
+              {error}
+            </p>
+            <button
+              onClick={() => navigate("/generate")}
+              className="font-pixel text-[10px] tracking-[0.2em] uppercase text-balatro-text hover:text-balatro-red"
             >
-              {cur.label}…
-            </Motion.span>
-            <span className="font-pixel text-base text-balatro-text tabular-nums">
-              {Math.floor(progress)}%
-            </span>
+              ◄ Voltar para configuração
+            </button>
           </div>
-          <div
-            className="relative h-4 rounded-full border-2 border-balatro-card-edge bg-balatro-bg-deep overflow-hidden"
-            style={{ boxShadow: "inset 0 2px 4px rgba(0,0,0,0.6)" }}
-          >
-            <Motion.div
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.05, ease: "linear" }}
-              className="h-full rounded-full"
-              style={{
-                background: `linear-gradient(90deg, ${cur.color}, ${cur.color}aa)`,
-                boxShadow: `0 0 16px ${cur.color}`,
-              }}
-            />
+        ) : (
+          <div className="w-full max-w-md flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <Motion.span
+                key={phase}
+                initial={{ x: -10, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                className="font-pixel text-[10px] tracking-[0.2em] uppercase"
+                style={{ color: cur.color, textShadow: `0 0 8px ${cur.color}` }}
+              >
+                {cur.label}…
+              </Motion.span>
+              <span className="font-pixel text-base text-balatro-text tabular-nums">
+                {Math.floor(progress)}%
+              </span>
+            </div>
+            <div
+              className="relative h-4 rounded-full border-2 border-balatro-card-edge bg-balatro-bg-deep overflow-hidden"
+              style={{ boxShadow: "inset 0 2px 4px rgba(0,0,0,0.6)" }}
+            >
+              <Motion.div
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.05, ease: "linear" }}
+                className="h-full rounded-full"
+                style={{
+                  background: `linear-gradient(90deg, ${cur.color}, ${cur.color}aa)`,
+                  boxShadow: `0 0 16px ${cur.color}`,
+                }}
+              />
+            </div>
+            <div className="flex justify-between font-pixel text-[8px] tracking-widest text-balatro-text-dim">
+              <span className={phase >= 0 ? "text-balatro-blue text-glow-blue" : ""}>FASE 1</span>
+              <span className={phase >= 1 ? "text-balatro-purple text-glow-purple" : ""}>FASE 2</span>
+              <span className={phase >= 2 ? "text-balatro-gold text-glow-gold" : ""}>FASE 3</span>
+            </div>
           </div>
-          <div className="flex justify-between font-pixel text-[8px] tracking-widest text-balatro-text-dim">
-            <span className={phase >= 0 ? "text-balatro-blue text-glow-blue" : ""}>FASE 1</span>
-            <span className={phase >= 1 ? "text-balatro-purple text-glow-purple" : ""}>FASE 2</span>
-            <span className={phase >= 2 ? "text-balatro-gold text-glow-gold" : ""}>FASE 3</span>
-          </div>
-        </div>
+        )}
 
-        {done && (
+        {done && !error && (
           <Motion.p
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}

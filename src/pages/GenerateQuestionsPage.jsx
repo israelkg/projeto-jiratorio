@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 import {
-  Home, UserCircle2, Sparkles, ChevronLeft, Check, CircleDot, ListChecks, Pencil,
+  Home, UserCircle2, Sparkles, ChevronLeft, Check, CircleDot, ListChecks, Pencil, FileText, AlertTriangle,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
+import { listMaterials } from "@/features/materials/api";
+import { useGenerationStore } from "@/features/questions/store/generationStore";
 import { cn } from "@/lib/utils";
 
 const QUESTION_TYPES = [
@@ -23,22 +25,47 @@ export default function GenerateQuestionsPage() {
   const navigate = useNavigate();
   const onHome = () => navigate("/");
   const onBack = () => navigate(-1);
+  const setRequest = useGenerationStore((s) => s.setRequest);
 
+  const [materials, setMaterials] = useState([]);
+  const [materialId, setMaterialId] = useState(null);
+  const [loadingMaterials, setLoadingMaterials] = useState(true);
   const [quantity, setQuantity] = useState(10);
   const [difficulty, setDifficulty] = useState("medio");
   const [types, setTypes] = useState({ multipla: true, verdadeiro: false, dissertativa: false });
-  const [generating, setGenerating] = useState(false);
-  const navTimeoutRef = useRef(null);
+  const [error, setError] = useState(null);
 
-  useEffect(() => () => {
-    if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
+  useEffect(() => {
+    listMaterials()
+      .then((list) => {
+        const ready = list.filter((m) => m.status === "ready");
+        setMaterials(ready);
+        if (ready.length > 0) setMaterialId(ready[0].id);
+      })
+      .catch((err) => setError(err.message ?? "Falha ao carregar materiais"))
+      .finally(() => setLoadingMaterials(false));
   }, []);
 
   const toggleType = (id) => setTypes((t) => ({ ...t, [id]: !t[id] }));
 
   const handleGenerate = () => {
-    setGenerating(true);
-    navTimeoutRef.current = setTimeout(() => navigate("/loading"), 600);
+    if (!materialId) {
+      setError("Selecione um material com status 'ready' (ou faça upload).");
+      return;
+    }
+    const selectedTypes = Object.entries(types).filter(([, v]) => v).map(([k]) => k);
+    if (selectedTypes.length === 0) {
+      setError("Selecione ao menos um tipo de pergunta.");
+      return;
+    }
+
+    setRequest({
+      materialId,
+      quantity,
+      difficulty,
+      types: selectedTypes,
+    });
+    navigate("/loading");
   };
 
   return (
@@ -84,6 +111,42 @@ export default function GenerateQuestionsPage() {
         </Motion.div>
 
         <div className="w-full max-w-2xl flex flex-col gap-4">
+          {/* Material */}
+          <Motion.div
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.05 }}
+            className="rounded-xl border-2 border-balatro-card-edge bg-balatro-card/80 backdrop-blur-md p-5"
+            style={{ boxShadow: "0 8px 0 #000, 0 14px 24px rgba(0,0,0,0.5)" }}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-lg border-2 border-balatro-blue bg-balatro-blue/15 flex items-center justify-center text-balatro-blue">
+                <FileText size={18} />
+              </div>
+              <div className="flex-1">
+                <p className="font-pixel text-[10px] tracking-[0.2em] uppercase text-balatro-text">Material Base</p>
+                <p className="text-[11px] text-balatro-text-dim">A IA vai gerar perguntas a partir do texto extraído</p>
+              </div>
+            </div>
+            {loadingMaterials ? (
+              <p className="font-pixel text-[10px] text-balatro-text-dim uppercase tracking-[0.2em]">Carregando materiais...</p>
+            ) : materials.length === 0 ? (
+              <p className="font-pixel text-[10px] text-balatro-red uppercase tracking-[0.2em]">
+                Nenhum material com status 'ready'. Faça upload primeiro.
+              </p>
+            ) : (
+              <select
+                value={materialId ?? ""}
+                onChange={(e) => setMaterialId(Number(e.target.value))}
+                className="balatro-input"
+              >
+                {materials.map((m) => (
+                  <option key={m.id} value={m.id}>{m.name} ({m.kind})</option>
+                ))}
+              </select>
+            )}
+          </Motion.div>
+
           {/* Quantidade */}
           <Motion.div
             initial={{ x: -20, opacity: 0 }}
@@ -188,19 +251,25 @@ export default function GenerateQuestionsPage() {
           </Motion.div>
         </div>
 
+        {error && (
+          <div className="font-pixel text-[10px] tracking-[0.2em] text-balatro-red uppercase flex items-center gap-2">
+            <AlertTriangle size={14} /> {error}
+          </div>
+        )}
+
         <Motion.button
           onClick={handleGenerate}
-          disabled={generating}
-          whileHover={!generating && { y: -3, scale: 1.03 }}
-          whileTap={!generating && { y: 2, scale: 0.98 }}
+          disabled={materials.length === 0}
+          whileHover={materials.length > 0 ? { y: -3, scale: 1.03 } : undefined}
+          whileTap={materials.length > 0 ? { y: 2, scale: 0.98 } : undefined}
           className={cn(
             "px-12 py-4 rounded-2xl font-pixel text-sm tracking-[0.25em] uppercase border-b-4 flex items-center gap-3",
-            generating
-              ? "bg-balatro-card-edge text-balatro-text-dim border-black cursor-wait"
+            materials.length === 0
+              ? "bg-balatro-card-edge text-balatro-text-dim border-black cursor-not-allowed"
               : "bg-balatro-purple text-white border-purple-950 hover:shadow-[0_0_32px_rgba(155,89,182,0.6)]",
           )}
         >
-          {generating ? <><Check size={18} /> Gerando…</> : <><Sparkles size={18} /> Gerar Perguntas</>}
+          <Sparkles size={18} /> Gerar Perguntas
         </Motion.button>
       </main>
     </CRTFrame>
