@@ -2,18 +2,34 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, Link, useLocation } from "react-router-dom";
-import { Spade } from "lucide-react";
+import { Spade, Eye } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { BalatroButton } from "@/components/balatro/BalatroButton";
 import { loginSchema } from "@/features/auth/schema";
 import { loginRequest } from "@/features/auth/api";
 import { useAuthStore } from "@/features/auth/store/authStore";
 
+const GUEST_SESSION = {
+  token: "guest-demo-token",
+  user: {
+    id: 0,
+    name: "Visitante",
+    email: "guest@local.demo",
+    role: "user",
+  },
+};
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const setSession = useAuthStore((s) => s.setSession);
   const [submitError, setSubmitError] = useState(null);
+
+  const enterAsGuest = () => {
+    setSession(GUEST_SESSION);
+    const redirectTo = location.state?.from?.pathname ?? "/";
+    navigate(redirectTo, { replace: true });
+  };
 
   const {
     register,
@@ -87,6 +103,22 @@ export default function LoginPage() {
               {isSubmitting ? "Entrando..." : "Entrar"}
             </BalatroButton>
           </form>
+
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-balatro-card-edge" />
+            <span className="font-pixel text-[8px] tracking-[0.3em] text-balatro-text-dim uppercase">ou</span>
+            <div className="flex-1 h-px bg-balatro-card-edge" />
+          </div>
+
+          <BalatroButton
+            type="button"
+            variant="ghost"
+            size="md"
+            onClick={enterAsGuest}
+            className="w-full"
+          >
+            <Eye size={16} /> Entrar como Visitante
+          </BalatroButton>
 
           <p className="font-pixel text-[10px] tracking-[0.25em] text-balatro-text-dim uppercase text-center">
             Sem conta?{" "}
