@@ -1,5 +1,7 @@
 import { api } from "@/lib/api";
 
+export const MATCH_MODES = ["individual", "dupla"];
+
 export async function fetchMatchConfig() {
   const { data } = await api.get("/match_config");
   return data;
