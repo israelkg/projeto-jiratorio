@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion as Motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import {
   Home, UserCircle2, Upload, Users, User, Sparkles,
   ListOrdered, Zap, Package, HelpCircle, LayoutList,
-  PlayCircle, ChevronRight, Spade,
+  PlayCircle, ChevronRight, Spade, AlertTriangle,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { BalatroButton } from "@/components/balatro/BalatroButton";
-
+import { fetchMatchConfig, updateMatchConfig } from "@/features/match-config/api";
+import { useActiveSessionStore } from "@/features/sessions/store/activeSessionStore";
 import { cn } from "@/lib/utils";
 
 const MENU_ITEMS = [
@@ -25,12 +26,43 @@ const MENU_ITEMS = [
 export default function CreateMatchPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState("individual");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const activeSession = useActiveSessionStore((s) => s.sessionId);
+  const sessionName = useActiveSessionStore((s) => s.sessionName);
+
+  useEffect(() => {
+    fetchMatchConfig()
+      .then((cfg) => setMode(cfg.mode ?? "individual"))
+      .catch(() => {});
+  }, []);
+
+  const handleModeChange = async (next) => {
+    if (next === mode) return;
+    setMode(next);
+    setSaving(true);
+    setError(null);
+    try {
+      await updateMatchConfig({ mode: next });
+    } catch (err) {
+      setError(err.message ?? "Falha ao salvar modo");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleStart = () => {
+    if (!activeSession) {
+      setError("Carregue ou crie uma sessão antes de iniciar (Carregar Sessão na Home).");
+      return;
+    }
+    navigate(mode === "dupla" ? "/duo-mode" : "/sort-draw");
+  };
+
   const onHome = () => navigate("/");
 
   return (
     <CRTFrame className="bg-balatro-bg-deep">
-      
-
       <nav className="relative z-10 flex items-center justify-between px-8 py-4 border-b-2 border-balatro-card-edge bg-black/40 backdrop-blur-md">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-balatro-red" />
@@ -64,6 +96,11 @@ export default function CreateMatchPage() {
               style={{ filter: "drop-shadow(0 0 14px rgba(254,95,85,0.5))" }}>
             CRIAR PARTIDA
           </h1>
+          {sessionName && (
+            <p className="font-pixel text-[10px] tracking-[0.3em] text-balatro-green uppercase">
+              ◆ Sessão ativa: {sessionName} ◆
+            </p>
+          )}
         </Motion.div>
 
         <Motion.div
@@ -74,8 +111,8 @@ export default function CreateMatchPage() {
           style={{ boxShadow: "0 16px 0 #000, 0 24px 48px rgba(0,0,0,0.7)" }}
         >
           <div className="grid grid-cols-2 border-b-2 border-balatro-card-edge">
-            <ModeButton active={mode === "individual"} icon={<User size={14} />} label="Individual" onClick={() => setMode("individual")} />
-            <ModeButton active={mode === "dupla"}      icon={<Users size={14} />} label="Em Dupla"   onClick={() => setMode("dupla")} />
+            <ModeButton active={mode === "individual"} icon={<User size={14} />} label="Individual" onClick={() => handleModeChange("individual")} disabled={saving} />
+            <ModeButton active={mode === "dupla"}      icon={<Users size={14} />} label="Em Dupla"   onClick={() => handleModeChange("dupla")} disabled={saving} />
           </div>
 
           <div className="flex flex-col">
@@ -94,9 +131,15 @@ export default function CreateMatchPage() {
           </div>
         </Motion.div>
 
+        {error && (
+          <div className="font-pixel text-[10px] tracking-[0.2em] text-balatro-red uppercase flex items-center gap-2">
+            <AlertTriangle size={14} /> {error}
+          </div>
+        )}
+
         <BalatroButton
           variant="red"
-          onClick={() => navigate(mode === "dupla" ? "/duo-mode" : "/sort-draw")}
+          onClick={handleStart}
         >
           <Spade size={18} fill="currentColor" />
           <PlayCircle size={20} />
@@ -108,12 +151,13 @@ export default function CreateMatchPage() {
   );
 }
 
-function ModeButton({ active, icon, label, onClick }) {
+function ModeButton({ active, icon, label, onClick, disabled }) {
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       className={cn(
-        "flex items-center justify-center gap-2 py-4 font-pixel text-[10px] tracking-[0.25em] uppercase transition-all border-b-2",
+        "flex items-center justify-center gap-2 py-4 font-pixel text-[10px] tracking-[0.25em] uppercase transition-all border-b-2 disabled:opacity-50",
         active
           ? "bg-balatro-red/20 text-balatro-red text-glow-red border-balatro-red"
           : "text-balatro-text-dim border-transparent hover:text-balatro-text hover:bg-white/5",

@@ -2,21 +2,50 @@ import { useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 import {
-  CloudUpload, Home, UserCircle2, CheckCircle2, FileText, X, ChevronLeft, Users,
+  CloudUpload, Home, UserCircle2, CheckCircle2, FileText, X, ChevronLeft, Users, Loader2,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { BalatroButton } from "@/components/balatro/BalatroButton";
+import { createSessionWithCsv } from "@/features/sessions/api";
+import { useActiveSessionStore } from "@/features/sessions/store/activeSessionStore";
 import { cn } from "@/lib/utils";
 
 export default function ImportPage() {
   const navigate = useNavigate();
   const onHome = () => navigate("/");
   const onBack = () => navigate(-1);
+  const setActiveSession = useActiveSessionStore((s) => s.setSession);
 
   const [dragging, setDragging] = useState(false);
   const [file, setFile] = useState(null);
+  const [name, setName] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const inputRef = useRef(null);
+
+  const handleSubmit = async () => {
+    if (!file) return;
+    if (!name.trim()) {
+      setError("Informe um nome para a sessão.");
+      return;
+    }
+    setSubmitting(true);
+    setError("");
+    try {
+      const result = await createSessionWithCsv({ name: name.trim(), file });
+      setActiveSession({
+        id: result.session.id,
+        name: result.session.name,
+        students: result.students,
+      });
+      navigate("/create");
+    } catch (err) {
+      const details = Array.isArray(err.details) ? err.details.join(" · ") : null;
+      setError(details ?? err.message ?? "Falha ao importar");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleFile = (f) => {
     if (!f) return;
@@ -165,8 +194,22 @@ export default function ImportPage() {
           </Motion.div>
         )}
 
-        <BalatroButton onClick={onBack} disabled={!file} variant="green">
-          <CheckCircle2 size={18} /> Confirmar Importação
+        <div className="w-full max-w-xl flex flex-col gap-2">
+          <label className="font-pixel text-[10px] tracking-[0.3em] text-balatro-text-dim uppercase">
+            Nome da Sessão
+          </label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Ex: Biologia · 9º Ano"
+            className="balatro-input"
+            disabled={submitting}
+          />
+        </div>
+
+        <BalatroButton onClick={handleSubmit} disabled={!file || submitting} variant="green">
+          {submitting ? <><Loader2 size={18} className="animate-spin" /> Importando...</> : <><CheckCircle2 size={18} /> Confirmar Importação</>}
         </BalatroButton>
       </main>
     </CRTFrame>
