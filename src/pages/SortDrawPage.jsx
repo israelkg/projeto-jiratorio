@@ -1,45 +1,84 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion as Motion } from "motion/react";
-import { Home, UserCircle2, ChevronLeft, Volume2, Skull, Dice5, ArrowRight } from "lucide-react";
+import { Home, UserCircle2, ChevronLeft, Volume2, Skull, Dice5, ArrowRight, AlertTriangle } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { useStudentsStore } from "@/features/students/store/studentsStore";
 import { useRoundStore } from "@/features/round/store/roundStore";
 import { RoleCard } from "@/features/round/components/RoleCard";
-import { pickRandom, pickWeighted } from "@/lib/random";
+import { drawRoles } from "@/features/sessions/api";
+import { useActiveSessionStore } from "@/features/sessions/store/activeSessionStore";
+import { pickRandom } from "@/lib/random";
 
 export default function SortDrawPage() {
   const navigate = useNavigate();
   const onHome = () => navigate("/");
   const onBack = () => navigate(-1);
 
-  const students = useStudentsStore((s) => s.students);
+  const fallbackStudents = useStudentsStore((s) => s.students);
   const incrementVictimCount = useStudentsStore((s) => s.incrementVictimCount);
   const setRoles = useRoundStore((s) => s.setRoles);
+  const sessionId = useActiveSessionStore((s) => s.sessionId);
+  const sessionStudents = useActiveSessionStore((s) => s.students);
+  const setLastDraw = useActiveSessionStore((s) => s.setLastDraw);
 
-  const [phase, setPhase] = useState("idle"); // idle | rolling | done
+  const students = sessionStudents.length > 0 ? sessionStudents : fallbackStudents;
+
+  const [phase, setPhase] = useState("idle");
   const [inquisitor, setInquisitor] = useState(null);
   const [victim, setVictim] = useState(null);
   const [tickName, setTickName] = useState("");
+  const [error, setError] = useState(null);
   const tickRef = useRef(null);
 
   useEffect(() => () => clearInterval(tickRef.current), []);
 
-  const startSort = () => {
+  const startSort = async () => {
+    setError(null);
     setPhase("rolling");
+
+    let result = null;
+    let resultError = null;
+
+    if (sessionId) {
+      try {
+        result = await drawRoles(sessionId);
+      } catch (err) {
+        resultError = err;
+      }
+    }
+
     let count = 0;
     tickRef.current = setInterval(() => {
-      setTickName(pickRandom(students).name);
+      if (students.length > 0) setTickName(pickRandom(students).name);
       count++;
       if (count > 24) {
         clearInterval(tickRef.current);
-        const inq = pickRandom(students);
-        const remaining = students.filter((s) => s.id !== inq.id);
-        const vic = pickWeighted(remaining);
-        setInquisitor(inq);
-        setVictim(vic);
-        setRoles(inq.id, vic.id);
-        incrementVictimCount(vic.id);
+
+        if (resultError) {
+          setError(resultError.message ?? "Falha ao sortear no servidor");
+          setPhase("idle");
+          return;
+        }
+
+        if (result) {
+          setInquisitor(result.inquisitor);
+          setVictim(result.victim);
+          setRoles(result.inquisitor.id, result.victim.id);
+          setLastDraw(result);
+        } else if (students.length >= 2) {
+          const inq = pickRandom(students);
+          const remaining = students.filter((s) => s.id !== inq.id);
+          const vic = pickRandom(remaining);
+          setInquisitor(inq);
+          setVictim(vic);
+          setRoles(inq.id, vic.id);
+          incrementVictimCount(vic.id);
+        } else {
+          setError("Carregue uma sessão com ao menos 2 alunos antes de sortear.");
+          setPhase("idle");
+          return;
+        }
         setPhase("done");
       }
     }, 80);
@@ -93,14 +132,21 @@ export default function SortDrawPage() {
         </Motion.div>
 
         {phase === "idle" && (
-          <Motion.button
-            onClick={startSort}
-            whileHover={{ y: -4, scale: 1.05 }}
-            whileTap={{ y: 2, scale: 0.97 }}
-            className="px-12 py-5 rounded-2xl bg-balatro-red text-white font-pixel text-sm tracking-[0.3em] uppercase border-b-4 border-red-950 hover:shadow-balatro-glow-red flex items-center gap-3"
-          >
-            <Dice5 size={18} /> Sortear Papéis
-          </Motion.button>
+          <>
+            {error && (
+              <div className="font-pixel text-[10px] tracking-[0.2em] text-balatro-red uppercase flex items-center gap-2">
+                <AlertTriangle size={14} /> {error}
+              </div>
+            )}
+            <Motion.button
+              onClick={startSort}
+              whileHover={{ y: -4, scale: 1.05 }}
+              whileTap={{ y: 2, scale: 0.97 }}
+              className="px-12 py-5 rounded-2xl bg-balatro-red text-white font-pixel text-sm tracking-[0.3em] uppercase border-b-4 border-red-950 hover:shadow-balatro-glow-red flex items-center gap-3"
+            >
+              <Dice5 size={18} /> Sortear Papéis
+            </Motion.button>
+          </>
         )}
 
         {phase === "rolling" && (

@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 import {
-  Home, UserCircle2, ChevronLeft, Zap, Shield, Clock, Eye, Shuffle, Check,
+  Home, UserCircle2, ChevronLeft, Zap, Shield, Clock, Eye, Shuffle, Check, Loader2,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { BalatroButton } from "@/components/balatro/BalatroButton";
-
+import { fetchPowerupConfig, updatePowerupConfig } from "@/features/powerup-config/api";
 import { cn } from "@/lib/utils";
 
 const POWERUPS = [
@@ -23,11 +23,47 @@ export default function PowerUpsPage() {
   const onBack = () => navigate(-1);
 
   const [values, setValues] = useState({ dica: 25, tempo: 20, escudo: 15, troca: 10, dobro: 5 });
+  const [enabledCards, setEnabledCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState(null);
 
-  const set = (id, val) => { setSaved(false); setValues((v) => ({ ...v, [id]: Number(val) })); };
+  useEffect(() => {
+    fetchPowerupConfig()
+      .then((cfg) => {
+        if (cfg.probabilities) setValues({ ...values, ...cfg.probabilities });
+        if (cfg.enabled_cards) setEnabledCards(cfg.enabled_cards);
+      })
+      .catch((err) => setError(err.message ?? "Falha ao carregar"))
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const set = (id, val) => {
+    setSaved(false);
+    setError(null);
+    setValues((v) => ({ ...v, [id]: Number(val) }));
+  };
+
   const total = Object.values(values).reduce((a, b) => a + b, 0);
   const isValid = total === 100;
+
+  const handleSave = async () => {
+    if (!isValid) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await updatePowerupConfig({ probabilities: values, enabled_cards: enabledCards });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      const details = Array.isArray(err.details) ? err.details.join(" · ") : null;
+      setError(details ?? err.message ?? "Falha ao salvar");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <CRTFrame className="bg-balatro-bg-deep">
@@ -156,12 +192,22 @@ export default function PowerUpsPage() {
           })}
         </div>
 
+        {error && (
+          <p className="font-pixel text-[10px] tracking-[0.2em] text-balatro-red uppercase text-center">✗ {error}</p>
+        )}
+
         <BalatroButton
-          onClick={() => isValid && setSaved(true)}
-          disabled={!isValid}
+          onClick={handleSave}
+          disabled={!isValid || saving || loading}
           variant={saved ? "green" : "gold"}
         >
-          {saved ? <><Check size={18} /> Salvo!</> : <><Zap size={18} /> Salvar Power-Ups</>}
+          {saving ? (
+            <><Loader2 size={18} className="animate-spin" /> Salvando...</>
+          ) : saved ? (
+            <><Check size={18} /> Salvo!</>
+          ) : (
+            <><Zap size={18} /> Salvar Power-Ups</>
+          )}
         </BalatroButton>
       </main>
     </CRTFrame>
