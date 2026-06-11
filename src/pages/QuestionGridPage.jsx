@@ -1,8 +1,11 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion as Motion } from "motion/react";
-import { Home, UserCircle2, ChevronLeft, LayoutList, Lock } from "lucide-react";
+import { Home, UserCircle2, ChevronLeft, LayoutList, Lock, Loader2, AlertTriangle } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
-import { useRoundStore } from "@/features/round/store/roundStore";
+import { getSessionQuestions } from "@/features/sessions/api";
+import { useActiveSessionStore } from "@/features/sessions/store/activeSessionStore";
+import { useRoundFlowStore } from "@/features/rounds/store/roundFlowStore";
 import { cn } from "@/lib/utils";
 
 export default function QuestionGridPage() {
@@ -10,15 +13,32 @@ export default function QuestionGridPage() {
   const onHome = () => navigate("/");
   const onBack = () => navigate(-1);
 
-  const total = useRoundStore((s) => s.questionsTotal);
-  const used = useRoundStore((s) => s.questionsUsed);
-  const setQuestion = useRoundStore((s) => s.setQuestion);
+  const sessionId = useActiveSessionStore((s) => s.sessionId);
+  const setSelectedQuestion = useRoundFlowStore((s) => s.setSelectedQuestion);
 
-  const select = (id) => {
-    if (used.includes(id)) return;
-    setQuestion(id);
+  const [questions, setQuestions] = useState([]);
+  const [used, setUsed] = useState([]);
+  const [loading, setLoading] = useState(Boolean(sessionId));
+  const [error, setError] = useState(
+    sessionId ? null : "Nenhuma sessão ativa. Carregue uma sessão na Home.",
+  );
+
+  useEffect(() => {
+    if (!sessionId) return;
+    getSessionQuestions(sessionId)
+      .then(setQuestions)
+      .catch((err) => setError(err.message ?? "Falha ao carregar perguntas"))
+      .finally(() => setLoading(false));
+  }, [sessionId]);
+
+  const select = (q) => {
+    if (used.includes(q.id)) return;
+    setSelectedQuestion(q);
+    setUsed((u) => [...u, q.id]);
     navigate("/round-question");
   };
+
+  const remaining = questions.length - used.length;
 
   return (
     <CRTFrame>
@@ -61,49 +81,82 @@ export default function QuestionGridPage() {
             ESCOLHER PERGUNTA
           </h1>
           <p className="font-pixel text-[8px] tracking-[0.3em] text-balatro-text-dim uppercase">
-            ◆ {total - used.length} de {total} restantes ◆
+            ◆ {remaining} de {questions.length} restantes ◆
           </p>
         </Motion.div>
 
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 max-w-3xl">
-          {Array.from({ length: total }, (_, i) => i + 1).map((id) => {
-            const isUsed = used.includes(id);
-            return (
-              <Motion.button
-                key={id}
-                type="button"
-                onClick={() => select(id)}
-                disabled={isUsed}
-                aria-label={`Pergunta ${id}${isUsed ? " (usada)" : ""}`}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: id * 0.04, type: "spring", stiffness: 260, damping: 20 }}
-                whileHover={!isUsed && { y: -8, scale: 1.05, rotate: id % 2 === 0 ? -2 : 2 }}
-                whileTap={!isUsed && { scale: 0.96 }}
-                className={cn(
-                  "relative aspect-[3/4] rounded-xl border-4 flex flex-col items-center justify-center gap-1 transition-all",
-                  isUsed
-                    ? "border-balatro-card-edge bg-balatro-card opacity-40 grayscale cursor-not-allowed"
-                    : "border-balatro-blue bg-balatro-card cursor-pointer hover:shadow-balatro-glow-blue",
-                )}
-                style={{
-                  boxShadow: !isUsed ? "0 8px 0 #000, 0 14px 24px rgba(0,157,255,0.3)" : "0 4px 0 #000",
-                }}
-              >
-                <span
-                  className="font-pixel text-3xl tabular-nums"
+        {loading ? (
+          <p className="font-pixel text-[10px] tracking-[0.3em] text-balatro-text-dim uppercase flex items-center gap-2">
+            <Loader2 size={12} className="animate-spin" /> Carregando perguntas...
+          </p>
+        ) : error ? (
+          <div className="flex flex-col items-center gap-4">
+            <p className="font-pixel text-[10px] tracking-[0.2em] text-balatro-red uppercase flex items-center gap-2">
+              <AlertTriangle size={14} /> {error}
+            </p>
+            <button
+              onClick={() => navigate("/choose-questions")}
+              className="font-pixel text-[10px] tracking-[0.2em] uppercase text-balatro-blue hover:underline"
+            >
+              ◄ Selecionar perguntas da sessão
+            </button>
+          </div>
+        ) : questions.length === 0 ? (
+          <div className="flex flex-col items-center gap-4">
+            <p className="font-pixel text-[11px] tracking-[0.2em] text-balatro-text-dim uppercase text-center">
+              Nenhuma pergunta atribuída a esta sessão.
+            </p>
+            <button
+              onClick={() => navigate("/choose-questions")}
+              className="font-pixel text-[10px] tracking-[0.2em] uppercase text-balatro-blue hover:underline"
+            >
+              ◄ Selecionar perguntas
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 max-w-3xl">
+            {questions.map((q, idx) => {
+              const id = q.id;
+              const number = idx + 1;
+              const isUsed = used.includes(id);
+              return (
+                <Motion.button
+                  key={id}
+                  type="button"
+                  onClick={() => select(q)}
+                  disabled={isUsed}
+                  aria-label={`Pergunta ${number}${isUsed ? " (usada)" : ""}`}
+                  title={q.text}
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: number * 0.04, type: "spring", stiffness: 260, damping: 20 }}
+                  whileHover={!isUsed ? { y: -8, scale: 1.05, rotate: number % 2 === 0 ? -2 : 2 } : undefined}
+                  whileTap={!isUsed ? { scale: 0.96 } : undefined}
+                  className={cn(
+                    "relative aspect-[3/4] rounded-xl border-4 flex flex-col items-center justify-center gap-1 transition-all p-1",
+                    isUsed
+                      ? "border-balatro-card-edge bg-balatro-card opacity-40 grayscale cursor-not-allowed"
+                      : "border-balatro-blue bg-balatro-card cursor-pointer hover:shadow-balatro-glow-blue",
+                  )}
                   style={{
-                    color: isUsed ? "rgba(255,255,255,0.3)" : "#009dff",
-                    textShadow: !isUsed ? "0 0 10px #009dff" : "none",
+                    boxShadow: !isUsed ? "0 8px 0 #000, 0 14px 24px rgba(0,157,255,0.3)" : "0 4px 0 #000",
                   }}
                 >
-                  {String(id).padStart(2, "0")}
-                </span>
-                {isUsed && <Lock size={14} className="text-balatro-text-dim" />}
-              </Motion.button>
-            );
-          })}
-        </div>
+                  <span
+                    className="font-pixel text-3xl tabular-nums"
+                    style={{
+                      color: isUsed ? "rgba(255,255,255,0.3)" : "#009dff",
+                      textShadow: !isUsed ? "0 0 10px #009dff" : "none",
+                    }}
+                  >
+                    {String(number).padStart(2, "0")}
+                  </span>
+                  {isUsed && <Lock size={14} className="text-balatro-text-dim" />}
+                </Motion.button>
+              );
+            })}
+          </div>
+        )}
       </main>
     </CRTFrame>
   );

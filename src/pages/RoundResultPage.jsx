@@ -7,6 +7,7 @@ import { FloatingSuits } from "@/components/balatro/FloatingSuits";
 import { BalatroButton } from "@/components/balatro/BalatroButton";
 import { PodiumCard } from "@/features/round/components/result/PodiumCard";
 import { PlayerRow } from "@/features/round/components/result/PlayerRow";
+import { useRoundFlowStore } from "@/features/rounds/store/roundFlowStore";
 import { cn } from "@/lib/utils";
 
 const DEMO_PLAYERS = [
@@ -16,6 +17,20 @@ const DEMO_PLAYERS = [
   { id: 4, name: "FULANO 4", totalPoints: 7,  roundPoints: 0, avatar: "F4", trend: "same", chips: 140, mult: 2 },
   { id: 5, name: "FULANO 5", totalPoints: 4,  roundPoints: 1, avatar: "F5", trend: "up",   chips: 100, mult: 1 },
 ];
+
+// Mapeia o placar do backend ({ id, name, points }) para o formato visual da página.
+function scoreboardToPlayers(scoreboard) {
+  return scoreboard.map((s, idx) => ({
+    id: s.id,
+    name: s.name,
+    totalPoints: s.points,
+    roundPoints: 0,
+    avatar: s.name?.slice(0, 2).toUpperCase() ?? "?",
+    trend: "same",
+    chips: s.points * 20,
+    mult: Math.max(1, scoreboard.length - idx),
+  }));
+}
 
 function RollingNumber({ value, duration = 1200, className }) {
   const [display, setDisplay] = useState(0);
@@ -34,17 +49,21 @@ function RollingNumber({ value, duration = 1200, className }) {
   return <span className={cn("tabular-nums", className)}>{display.toLocaleString("pt-BR")}</span>;
 }
 
-export default function RoundResultPage({
-  players = DEMO_PLAYERS,
-  roundNumber = 20,
-}) {
+export default function RoundResultPage() {
   const navigate = useNavigate();
   const onHome = () => navigate("/");
-  const onNextRound = () => navigate("/round-question");
+  const onNextRound = () => navigate("/sort-draw");
   const onReplayRound = () => navigate("/choose-questions");
 
+  const scoreboard = useRoundFlowStore((s) => s.scoreboard);
+  const roundNumber = useRoundFlowStore((s) => s.roundNumber);
+  const nextRound = useRoundFlowStore((s) => s.nextRound);
+
+  const players = scoreboard.length > 0 ? scoreboardToPlayers(scoreboard) : DEMO_PLAYERS;
   const sorted = [...players].sort((a, b) => b.totalPoints - a.totalPoints);
   const winner = sorted[0];
+
+  const handleNext = () => { nextRound(); onNextRound(); };
 
   return (
     <CRTFrame>
@@ -172,7 +191,7 @@ export default function RoundResultPage({
             <RotateCcw size={14} />
             Repetir
           </BalatroButton>
-          <BalatroButton onClick={onNextRound} variant="gold" size="md">
+          <BalatroButton onClick={handleNext} variant="gold" size="md">
             <ChevronRight size={14} />
             Próxima Rodada
           </BalatroButton>

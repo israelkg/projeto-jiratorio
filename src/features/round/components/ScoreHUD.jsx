@@ -1,12 +1,16 @@
 import { motion as Motion } from "motion/react";
 import { Crown } from "lucide-react";
 import { useStudentsStore } from "@/features/students/store/studentsStore";
+import { useRoundFlowStore } from "@/features/rounds/store/roundFlowStore";
 import { cn } from "@/lib/utils";
 
 export function ScoreHUD({ highlightId, className }) {
-  const students = useStudentsStore((s) => s.students);
+  const demoStudents = useStudentsStore((s) => s.students);
+  const scoreboard = useRoundFlowStore((s) => s.scoreboard);
+  // Usa placar real do backend quando disponível, senão cai no demo.
+  const students = scoreboard.length > 0 ? scoreboard : demoStudents;
   const sorted = [...students].sort((a, b) => b.points - a.points);
-  const top = sorted[0];
+  const top = sorted[0] ?? { id: null };
 
   return (
     <div
@@ -50,7 +54,7 @@ export function ScoreHUD({ highlightId, className }) {
                 <p className="font-pixel text-[9px] tracking-[0.15em] uppercase text-balatro-text truncate">
                   {s.name}
                 </p>
-                {s.inventory.length > 0 && (
+                {s.inventory?.length > 0 && (
                   <p className="text-[9px] text-balatro-text-dim mt-0.5">
                     🃏 {s.inventory.length}
                   </p>

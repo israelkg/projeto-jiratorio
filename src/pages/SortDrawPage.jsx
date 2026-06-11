@@ -5,6 +5,7 @@ import { Home, UserCircle2, ChevronLeft, Volume2, Skull, Dice5, ArrowRight, Aler
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { useStudentsStore } from "@/features/students/store/studentsStore";
 import { useRoundStore } from "@/features/round/store/roundStore";
+import { useRoundFlowStore } from "@/features/rounds/store/roundFlowStore";
 import { RoleCard } from "@/features/round/components/RoleCard";
 import { drawRoles } from "@/features/sessions/api";
 import { useActiveSessionStore } from "@/features/sessions/store/activeSessionStore";
@@ -18,6 +19,7 @@ export default function SortDrawPage() {
   const fallbackStudents = useStudentsStore((s) => s.students);
   const incrementVictimCount = useStudentsStore((s) => s.incrementVictimCount);
   const setRoles = useRoundStore((s) => s.setRoles);
+  const setFlowRoles = useRoundFlowStore((s) => s.setRoles);
   const sessionId = useActiveSessionStore((s) => s.sessionId);
   const sessionStudents = useActiveSessionStore((s) => s.students);
   const setLastDraw = useActiveSessionStore((s) => s.setLastDraw);
@@ -65,6 +67,7 @@ export default function SortDrawPage() {
           setInquisitor(result.inquisitor);
           setVictim(result.victim);
           setRoles(result.inquisitor.id, result.victim.id);
+          setFlowRoles({ inquisitor: result.inquisitor, victim: result.victim });
           setLastDraw(result);
         } else if (students.length >= 2) {
           const inq = pickRandom(students);
@@ -73,6 +76,7 @@ export default function SortDrawPage() {
           setInquisitor(inq);
           setVictim(vic);
           setRoles(inq.id, vic.id);
+          setFlowRoles({ inquisitor: inq, victim: vic });
           incrementVictimCount(vic.id);
         } else {
           setError("Carregue uma sessão com ao menos 2 alunos antes de sortear.");
@@ -84,7 +88,7 @@ export default function SortDrawPage() {
     }, 80);
   };
 
-  const goToQuestion = () => navigate("/round-question");
+  const goToQuestion = () => navigate("/question-grid");
 
   return (
     <CRTFrame>

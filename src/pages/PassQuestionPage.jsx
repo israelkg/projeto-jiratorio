@@ -4,45 +4,76 @@ import { motion as Motion } from "motion/react";
 import { Home, UserCircle2, Dice5, Skull, ArrowRight } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { useStudentsStore } from "@/features/students/store/studentsStore";
-import { useRoundStore } from "@/features/round/store/roundStore";
+import { useRoundFlowStore } from "@/features/rounds/store/roundFlowStore";
+import { useActiveSessionStore } from "@/features/sessions/store/activeSessionStore";
+import { redrawVictim } from "@/features/sessions/api";
 import { pickRandom } from "@/lib/random";
 
 export default function PassQuestionPage() {
   const navigate = useNavigate();
   const onHome = () => navigate("/");
 
-  const students = useStudentsStore((s) => s.students);
-  const inquisitorId = useRoundStore((s) => s.inquisitorId);
-  const victimId = useRoundStore((s) => s.victimId);
-  const setVictim = useRoundStore((s) => s.setVictim);
-  const resetTimer = useRoundStore((s) => s.resetTimer);
+  const demoStudents = useStudentsStore((s) => s.students);
+  const sessionId = useActiveSessionStore((s) => s.sessionId);
+  const sessionStudents = useActiveSessionStore((s) => s.students);
+  const inquisitor = useRoundFlowStore((s) => s.inquisitor);
+  const victim = useRoundFlowStore((s) => s.victim);
+  const setFlowVictim = useRoundFlowStore((s) => s.setVictim);
+  const pushHistory = useRoundFlowStore((s) => s.pushHistory);
+
+  const students = sessionStudents.length > 0 ? sessionStudents : demoStudents;
 
   const [phase, setPhase] = useState("rolling");
   const [tickName, setTickName] = useState("");
   const [newVictim, setNewVictim] = useState(null);
+  const [error, setError] = useState(null);
   const tickRef = useRef(null);
 
   useEffect(() => {
-    const eligible = students.filter((s) => s.id !== inquisitorId && s.id !== victimId);
+    let cancelled = false;
+    const excludeIds = [inquisitor?.id, victim?.id].filter(Boolean);
+    const eligible = students.filter((s) => !excludeIds.includes(s.id));
+
     if (eligible.length === 0) {
       setPhase("empty");
       return undefined;
     }
+
+    // Sorteia no backend em paralelo à animação (quando há sessão real).
+    let backendResult = null;
+    let backendError = null;
+    const draw = sessionId && inquisitor?.id && victim?.id
+      ? redrawVictim(sessionId, excludeIds).then((r) => { backendResult = r; }).catch((e) => { backendError = e; })
+      : Promise.resolve();
+
     let count = 0;
     tickRef.current = setInterval(() => {
       setTickName(pickRandom(eligible).name);
       count++;
       if (count > 18) {
         clearInterval(tickRef.current);
-        const picked = pickRandom(eligible);
-        setNewVictim(picked);
-        setVictim(picked.id);
-        resetTimer();
-        setPhase("done");
+        draw.finally(() => {
+          if (cancelled) return;
+          if (backendError) {
+            setError(backendError.message ?? "Falha ao sortear nova vítima");
+            setPhase("empty");
+            return;
+          }
+          const picked = backendResult?.victim ?? pickRandom(eligible);
+          setNewVictim(picked);
+          setFlowVictim(picked);
+          pushHistory({ actor: picked.name, event: "recebeu a pergunta por repasse", type: "inquisitor" });
+          setPhase("done");
+        });
       }
     }, 80);
-    return () => clearInterval(tickRef.current);
-  }, [students, inquisitorId, victimId, setVictim, resetTimer]);
+
+    return () => {
+      cancelled = true;
+      clearInterval(tickRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const goBack = () => navigate("/round-question");
 
@@ -89,7 +120,7 @@ export default function PassQuestionPage() {
         {phase === "empty" && (
           <div className="flex flex-col items-center gap-4">
             <p className="font-pixel text-[12px] tracking-[0.2em] text-balatro-red text-glow-red uppercase text-center">
-              Sem alunos elegíveis para repasse
+              {error ?? "Sem alunos elegíveis para repasse"}
             </p>
             <Motion.button
               onClick={() => navigate("/round-question")}

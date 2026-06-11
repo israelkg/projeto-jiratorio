@@ -3,7 +3,7 @@ import { motion as Motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import {
   Home, UserCircle2, Mic, Volume2, Skull, Spade, Heart, Diamond, Club,
-  Check, X, Eye, Zap, ArrowRight,
+  Check, X, Eye, Zap, ArrowRight, Loader2, AlertTriangle,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { Timer } from "@/features/round/components/Timer";
@@ -13,34 +13,40 @@ import { RoleCard } from "@/features/round/components/RoleCard";
 import { QuestionCardCorner } from "@/features/round/components/QuestionCardCorner";
 import { ActionButton } from "@/features/round/components/ActionButton";
 import { useRoundStore } from "@/features/round/store/roundStore";
-import { useStudentsStore } from "@/features/students/store/studentsStore";
+import { useRoundFlowStore } from "@/features/rounds/store/roundFlowStore";
+import { useActiveSessionStore } from "@/features/sessions/store/activeSessionStore";
+import { createRound, submitRoundResult, drawPowerup } from "@/features/rounds/api";
 
-const DEMO_QUESTIONS = {
-  1: { text: "Em que ano foi assinada a Declaração de Independência dos Estados Unidos?", answer: "1776" },
-  2: { text: "Qual é o maior planeta do sistema solar?", answer: "Júpiter" },
-  3: { text: "Quem pintou a Mona Lisa?", answer: "Leonardo da Vinci" },
+const POWERUP_LABELS = {
+  dica: "Dica", tempo: "Tempo Extra", escudo: "Escudo",
+  troca: "Trocar Questão", dobro: "Pontos em Dobro",
+  inverter: "Inverter", pular: "Pular Vez", dupla: "Resposta em Dupla", roubar: "Roubar Ponto",
 };
 
 export default function RoundQuestionPage({ targetScore = 1500 }) {
   const navigate = useNavigate();
   const onHome = () => navigate("/");
 
-  const roundNumber = useRoundStore((s) => s.roundNumber);
-  const inquisitorId = useRoundStore((s) => s.inquisitorId);
-  const victimId = useRoundStore((s) => s.victimId);
-  const questionId = useRoundStore((s) => s.questionId);
-  const showAnswer = useRoundStore((s) => s.showAnswer);
-  const result = useRoundStore((s) => s.result);
-  const setResult = useRoundStore((s) => s.setResult);
-  const toggleAnswer = useRoundStore((s) => s.toggleAnswer);
-  const addHistory = useRoundStore((s) => s.addHistory);
+  const sessionId = useActiveSessionStore((s) => s.sessionId);
+
+  const roundNumber = useRoundFlowStore((s) => s.roundNumber);
+  const inquisitor = useRoundFlowStore((s) => s.inquisitor);
+  const victim = useRoundFlowStore((s) => s.victim);
+  const selectedQuestion = useRoundFlowStore((s) => s.selectedQuestion);
+  const currentRoundId = useRoundFlowStore((s) => s.currentRoundId);
+  const lastResult = useRoundFlowStore((s) => s.lastResult);
+  const setCurrentRound = useRoundFlowStore((s) => s.setCurrentRound);
+  const setScoreboard = useRoundFlowStore((s) => s.setScoreboard);
+  const setLastResult = useRoundFlowStore((s) => s.setLastResult);
+  const setLastPowerup = useRoundFlowStore((s) => s.setLastPowerup);
+  const pushHistory = useRoundFlowStore((s) => s.pushHistory);
+
   const startTimer = useRoundStore((s) => s.startTimer);
 
-  const students = useStudentsStore((s) => s.students);
-  const addPoints = useStudentsStore((s) => s.addPoints);
-  const givePowerUp = useStudentsStore((s) => s.givePowerUp);
-
   const [reading, setReading] = useState(false);
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
   const [puModal, setPuModal] = useState(false);
   const navTimeoutRef = useRef(null);
 
@@ -48,33 +54,81 @@ export default function RoundQuestionPage({ targetScore = 1500 }) {
     if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
   }, []);
 
-  const inquisitor = students.find((s) => s.id === inquisitorId);
-  const victim = students.find((s) => s.id === victimId);
-  const question = DEMO_QUESTIONS[questionId] ?? DEMO_QUESTIONS[1];
+  // Sem pergunta selecionada → volta pra grade.
+  useEffect(() => {
+    if (!selectedQuestion) navigate("/question-grid", { replace: true });
+  }, [selectedQuestion, navigate]);
 
-  const handleStart = () => {
+  const question = selectedQuestion ?? { text: "—", answer: "—" };
+  const canUseBackend = Boolean(sessionId && inquisitor?.id && victim?.id && selectedQuestion?.id);
+
+  const handleStart = async () => {
+    setError(null);
     setReading(true);
     startTimer();
+
+    if (!canUseBackend) return; // modo demo/local: sem criar round no backend
+
+    setBusy(true);
+    try {
+      const round = await createRound(sessionId, {
+        inquisitorId: inquisitor.id,
+        victimId: victim.id,
+        questionId: selectedQuestion.id,
+      });
+      setCurrentRound(round.id);
+    } catch (err) {
+      setError(err.message ?? "Falha ao iniciar rodada");
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const handleCorrect = () => {
-    if (!victim) return;
-    addPoints(victim.id, 1);
-    addHistory({ actor: victim.name, event: "acertou (+1)", type: "correct" });
-    // Sorteio power-up
-    const PU_IDS = ["dica", "tempo", "escudo", "troca", "dobro"];
-    const drawn = PU_IDS[Math.floor(Math.random() * PU_IDS.length)];
-    givePowerUp(victim.id, drawn);
-    addHistory({ actor: victim.name, event: `ganhou power-up: ${drawn}`, type: "powerup" });
-    setResult("correct");
-    navTimeoutRef.current = setTimeout(() => navigate("/round-finished"), 1500);
+  const submitOutcome = async (outcome) => {
+    if (!canUseBackend || !currentRoundId) {
+      // fallback local: só marca resultado visual
+      setLastResult(outcome);
+      return null;
+    }
+    const result = await submitRoundResult(sessionId, currentRoundId, outcome);
+    setScoreboard(result.scoreboard);
+    setLastResult(outcome);
+    return result;
   };
 
-  const handleWrong = () => {
-    if (!victim) return;
-    addPoints(victim.id, -1); // -0.5 ideal mas store usa int por simplicidade
-    addHistory({ actor: victim.name, event: "errou (-0,5)", type: "wrong" });
-    setResult("wrong");
+  const handleCorrect = async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      await submitOutcome("correct");
+      pushHistory({ actor: victim?.name ?? "—", event: "acertou a pergunta (+1)", type: "correct" });
+
+      if (canUseBackend && currentRoundId) {
+        const pu = await drawPowerup(sessionId, currentRoundId);
+        setLastPowerup(pu);
+        if (pu.drawn) {
+          pushHistory({ actor: victim?.name ?? "—", event: `ganhou power-up: ${POWERUP_LABELS[pu.drawn] ?? pu.drawn}`, type: "powerup" });
+        }
+      }
+      navTimeoutRef.current = setTimeout(() => navigate("/round-finished"), 1600);
+    } catch (err) {
+      setError(err.message ?? "Falha ao registrar acerto");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleWrong = async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      await submitOutcome("wrong");
+      pushHistory({ actor: victim?.name ?? "—", event: "errou a pergunta", type: "wrong" });
+    } catch (err) {
+      setError(err.message ?? "Falha ao registrar erro");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handlePass = () => navigate("/pass-question");
@@ -101,13 +155,11 @@ export default function RoundQuestionPage({ targetScore = 1500 }) {
       </nav>
 
       <main className="relative z-10 flex-1 grid grid-cols-1 lg:grid-cols-[220px_1fr_240px] gap-4 px-4 lg:px-8 py-6">
-        {/* LEFT — Inquisitor + Score */}
         <div className="flex flex-col gap-4">
           <RoleCard role="Inquisidor" name={inquisitor?.name ?? "—"} variant="purple" Icon={Volume2} />
-          <ScoreHUD highlightId={victimId} className="hidden lg:block" />
+          <ScoreHUD highlightId={victim?.id} className="hidden lg:block" />
         </div>
 
-        {/* CENTER — Boss Blind question + Timer + Actions */}
         <div className="flex flex-col items-center gap-5">
           <div className="flex items-center gap-3">
             <Skull size={18} className="text-balatro-red" />
@@ -133,7 +185,7 @@ export default function RoundQuestionPage({ targetScore = 1500 }) {
             <div className="flex items-start justify-between p-3 pb-0 text-balatro-red">
               <QuestionCardCorner letter="Q" />
               <span className="font-pixel text-[8px] tracking-[0.3em] text-balatro-text-dim uppercase">
-                Pergunta · #{String(questionId ?? 1).padStart(3, "0")}
+                {selectedQuestion?.type ? `Tipo · ${selectedQuestion.type}` : "Pergunta"}
               </span>
               <QuestionCardCorner letter="Q" flip />
             </div>
@@ -151,7 +203,7 @@ export default function RoundQuestionPage({ targetScore = 1500 }) {
                     className="rounded-xl border-2 border-balatro-green bg-balatro-green/15 px-6 py-3 mt-2"
                   >
                     <p className="font-pixel text-[9px] tracking-[0.3em] text-balatro-green uppercase mb-1">Resposta</p>
-                    <p className="text-base text-balatro-text font-mono">{question.answer}</p>
+                    <p className="text-base text-balatro-text font-mono">{question.answer || "—"}</p>
                   </Motion.div>
                 )}
               </AnimatePresence>
@@ -178,39 +230,46 @@ export default function RoundQuestionPage({ targetScore = 1500 }) {
             </AnimatePresence>
           </Motion.div>
 
+          {error && (
+            <div className="font-pixel text-[10px] tracking-[0.2em] text-balatro-red uppercase flex items-center gap-2">
+              <AlertTriangle size={14} /> {error}
+            </div>
+          )}
+
           {!reading ? (
             <Motion.button
               onClick={handleStart}
+              disabled={busy}
               whileHover={{ y: -3, scale: 1.04 }}
               whileTap={{ y: 2, scale: 0.97 }}
-              className="px-10 py-4 rounded-2xl bg-balatro-red text-white font-pixel text-sm tracking-[0.25em] uppercase border-b-4 border-red-950 hover:shadow-balatro-glow-red flex items-center gap-3"
+              className="px-10 py-4 rounded-2xl bg-balatro-red text-white font-pixel text-sm tracking-[0.25em] uppercase border-b-4 border-red-950 hover:shadow-balatro-glow-red flex items-center gap-3 disabled:opacity-60"
             >
-              <Mic size={16} /> Iniciar Leitura
+              {busy ? <Loader2 size={16} className="animate-spin" /> : <Mic size={16} />} Iniciar Leitura
             </Motion.button>
           ) : (
             <Timer />
           )}
 
-          {reading && !result && (
+          {reading && !lastResult && (
             <div className="grid grid-cols-2 gap-3 w-full max-w-md">
-              <ActionButton onClick={handleCorrect} color="#50c878" Icon={Check} label="Acertou" />
+              <ActionButton onClick={handleCorrect} color="#50c878" Icon={busy ? Loader2 : Check} label="Acertou" />
               <ActionButton onClick={handleWrong} color="#fe5f55" Icon={X} label="Errou" />
             </div>
           )}
 
-          {result === "wrong" && (
+          {lastResult === "wrong" && (
             <Motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               className="grid grid-cols-3 gap-2 w-full max-w-lg"
             >
               <ActionButton onClick={handlePass} color="#f0c040" Icon={ArrowRight} label="Repassar" />
-              <ActionButton onClick={toggleAnswer} color="#009dff" Icon={Eye} label={showAnswer ? "Ocultar" : "Revelar"} />
+              <ActionButton onClick={() => setShowAnswer((v) => !v)} color="#009dff" Icon={Eye} label={showAnswer ? "Ocultar" : "Revelar"} />
               <ActionButton onClick={() => navigate("/round-finished")} color="#9b59b6" Icon={Check} label="Finalizar" />
             </Motion.div>
           )}
 
-          {result === "correct" && (
+          {lastResult === "correct" && (
             <Motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -230,10 +289,9 @@ export default function RoundQuestionPage({ targetScore = 1500 }) {
           </button>
         </div>
 
-        {/* RIGHT — Victim + Score mobile */}
         <div className="flex flex-col gap-4">
           <RoleCard role="Vítima" name={victim?.name ?? "—"} variant="red" Icon={Skull} />
-          <ScoreHUD highlightId={victimId} className="lg:hidden" />
+          <ScoreHUD highlightId={victim?.id} className="lg:hidden" />
         </div>
       </main>
 

@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { PowerUpModal } from "@/features/round/components/PowerUpModal";
-
+import { useRoundFlowStore } from "@/features/rounds/store/roundFlowStore";
 import { cn } from "@/lib/utils";
 
 const DEMO_HISTORY = [
@@ -40,16 +40,24 @@ const VARIANT_STYLES = {
   red:    "bg-balatro-red    text-white border-red-950    hover:shadow-balatro-glow-red",
 };
 
-export default function RoundFinishedPage({
-  history = DEMO_HISTORY,
-  roundNumber = 20,
-}) {
+export default function RoundFinishedPage() {
   const navigate = useNavigate();
   const [puModal, setPuModal] = useState(false);
+
+  const flowHistory = useRoundFlowStore((s) => s.history);
+  const roundNumber = useRoundFlowStore((s) => s.roundNumber);
+  const nextRound = useRoundFlowStore((s) => s.nextRound);
+
+  const history = flowHistory.length > 0 ? flowHistory : DEMO_HISTORY;
 
   const handleAction = (action) => {
     if (action.id === "powerup") {
       setPuModal(true);
+      return;
+    }
+    if (action.id === "next") {
+      nextRound();
+      navigate("/sort-draw");
       return;
     }
     if (action.route) navigate(action.route);
