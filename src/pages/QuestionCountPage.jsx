@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 import {
-  Home, UserCircle2, ChevronLeft, HelpCircle, Check, Spade, Heart, Diamond, Club,
+  Home, UserCircle2, ChevronLeft, HelpCircle, Check, Loader2, Spade, Heart, Diamond, Club,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { BalatroButton } from "@/components/balatro/BalatroButton";
+import { fetchMatchConfig, updateMatchConfig } from "@/features/match-config/api";
 import { cn } from "@/lib/utils";
 
 const COUNT_OPTIONS = [
@@ -21,10 +22,32 @@ export default function QuestionCountPage() {
   const onHome = () => navigate("/");
   const onBack = () => navigate(-1);
   const [selected, setSelected] = useState(40);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSelect = (n) => { setSelected(n); setSaved(false); };
-  const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2500); };
+  useEffect(() => {
+    fetchMatchConfig()
+      .then((cfg) => { if (cfg.question_count) setSelected(cfg.question_count); })
+      .catch(() => {});
+  }, []);
+
+  const handleSelect = (n) => { setSelected(n); setSaved(false); setError(null); };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      await updateMatchConfig({ question_count: selected });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      const details = Array.isArray(err.details) ? err.details.join(" · ") : null;
+      setError(details ?? err.message ?? "Falha ao salvar");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <CRTFrame>
@@ -130,8 +153,14 @@ export default function QuestionCountPage() {
           })}
         </div>
 
-        <BalatroButton onClick={handleSave} variant={saved ? "green" : "blue"}>
-          {saved ? <><Check size={18} /> Salvo!</> : <><HelpCircle size={18} /> Salvar — {selected}</>}
+        {error && (
+          <p className="font-pixel text-[10px] tracking-[0.2em] text-balatro-red uppercase text-center">✗ {error}</p>
+        )}
+
+        <BalatroButton onClick={handleSave} disabled={saving} variant={saved ? "green" : "blue"}>
+          {saving ? <><Loader2 size={18} className="animate-spin" /> Salvando...</>
+            : saved ? <><Check size={18} /> Salvo!</>
+            : <><HelpCircle size={18} /> Salvar — {selected}</>}
         </BalatroButton>
       </main>
     </CRTFrame>

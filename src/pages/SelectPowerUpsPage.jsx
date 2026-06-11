@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 import {
-  Home, UserCircle2, ChevronLeft, Check, Zap,
+  Home, UserCircle2, ChevronLeft, Check, Zap, Loader2,
   RefreshCw, SkipForward, Users, Hand, Eye, Clock, Shuffle, Shield,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { BalatroButton } from "@/components/balatro/BalatroButton";
-
+import { fetchPowerupConfig, updatePowerupConfig } from "@/features/powerup-config/api";
 import { cn } from "@/lib/utils";
 
 const POWERUPS = [
@@ -27,10 +27,19 @@ export default function SelectPowerUpsPage() {
   const onBack = () => navigate(-1);
 
   const [enabled, setEnabled] = useState(new Set(["inverter", "dupla", "roubar", "dica"]));
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchPowerupConfig()
+      .then((cfg) => { if (Array.isArray(cfg.enabled_cards)) setEnabled(new Set(cfg.enabled_cards)); })
+      .catch(() => {});
+  }, []);
 
   const toggle = (id) => {
     setSaved(false);
+    setError(null);
     setEnabled((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
@@ -38,9 +47,19 @@ export default function SelectPowerUpsPage() {
     });
   };
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      await updatePowerupConfig({ enabled_cards: Array.from(enabled) });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      const details = Array.isArray(err.details) ? err.details.join(" · ") : null;
+      setError(details ?? err.message ?? "Falha ao salvar");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -157,12 +176,18 @@ export default function SelectPowerUpsPage() {
           })}
         </div>
 
+        {error && (
+          <p className="font-pixel text-[10px] tracking-[0.2em] text-balatro-red uppercase text-center">✗ {error}</p>
+        )}
+
         <BalatroButton
           onClick={handleSave}
-          disabled={enabled.size === 0}
+          disabled={enabled.size === 0 || saving}
           variant={saved ? "green" : "gold"}
         >
-          {saved ? <><Check size={18} /> Salvo!</> : <><Zap size={18} /> Confirmar Seleção</>}
+          {saving ? <><Loader2 size={18} className="animate-spin" /> Salvando...</>
+            : saved ? <><Check size={18} /> Salvo!</>
+            : <><Zap size={18} /> Confirmar Seleção</>}
         </BalatroButton>
       </main>
     </CRTFrame>
