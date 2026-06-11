@@ -6,10 +6,10 @@ import { Spade, Eye } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { BalatroButton } from "@/components/balatro/BalatroButton";
 import { loginSchema } from "@/features/auth/schema";
-import { loginRequest } from "@/features/auth/api";
+import { loginRequest, guestRequest } from "@/features/auth/api";
 import { useAuthStore } from "@/features/auth/store/authStore";
 
-const GUEST_SESSION = {
+const GUEST_FALLBACK = {
   token: "guest-demo-token",
   user: {
     id: 0,
@@ -24,9 +24,19 @@ export default function LoginPage() {
   const location = useLocation();
   const setSession = useAuthStore((s) => s.setSession);
   const [submitError, setSubmitError] = useState(null);
+  const [guestLoading, setGuestLoading] = useState(false);
 
-  const enterAsGuest = () => {
-    setSession(GUEST_SESSION);
+  const enterAsGuest = async () => {
+    setGuestLoading(true);
+    setSubmitError(null);
+    try {
+      // Tenta criar sessão de visitante real no backend (tudo funciona).
+      const data = await guestRequest();
+      setSession({ token: data.token, user: data.user });
+    } catch {
+      // Backend offline → modo demo local (só navegação de UI).
+      setSession(GUEST_FALLBACK);
+    }
     const redirectTo = location.state?.from?.pathname ?? "/";
     navigate(redirectTo, { replace: true });
   };
@@ -115,9 +125,10 @@ export default function LoginPage() {
             variant="ghost"
             size="md"
             onClick={enterAsGuest}
+            disabled={guestLoading}
             className="w-full"
           >
-            <Eye size={16} /> Entrar como Visitante
+            <Eye size={16} /> {guestLoading ? "Entrando..." : "Entrar como Visitante"}
           </BalatroButton>
 
           <p className="font-pixel text-[10px] tracking-[0.25em] text-balatro-text-dim uppercase text-center">

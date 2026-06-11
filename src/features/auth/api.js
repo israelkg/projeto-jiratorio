@@ -10,6 +10,11 @@ export async function registerRequest({ name, email, password }) {
   return data;
 }
 
+export async function guestRequest() {
+  const { data } = await api.post("/auth/guest");
+  return data;
+}
+
 export async function fetchCurrentUser() {
   const { data } = await api.get("/users/me");
   return data;
