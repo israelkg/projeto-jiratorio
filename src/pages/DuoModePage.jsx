@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion as Motion } from "motion/react";
+import { motion as Motion, AnimatePresence } from "motion/react";
 import {
-  Home, UserCircle2, Users, Loader2, AlertTriangle, Wand2,
+  Home, UserCircle2, Users, Loader2, AlertTriangle, Wand2, Hand, X,
   Spade, Heart, Diamond, Club, TrendingUp, TrendingDown, Zap, Star,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { BalatroButton } from "@/components/balatro/BalatroButton";
 import { TeamCard } from "@/features/round/components/duo/TeamCard";
 import { ActionFeed } from "@/features/round/components/duo/ActionFeed";
-import { fetchTeams, autoGenerateTeams } from "@/features/sessions/api";
+import { fetchTeams, autoGenerateTeams, getSession } from "@/features/sessions/api";
+import { listRounds, stealPoint } from "@/features/rounds/api";
 import { useActiveSessionStore } from "@/features/sessions/store/activeSessionStore";
 import { useRoundFlowStore } from "@/features/rounds/store/roundFlowStore";
 
@@ -40,6 +41,7 @@ export default function DuoModePage() {
 
   const sessionId = useActiveSessionStore((s) => s.sessionId);
   const flowHistory = useRoundFlowStore((s) => s.history);
+  const currentRoundId = useRoundFlowStore((s) => s.currentRoundId);
 
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(Boolean(sessionId));
@@ -47,6 +49,11 @@ export default function DuoModePage() {
   const [error, setError] = useState(
     sessionId ? null : "Nenhuma sessão ativa. Carregue uma sessão na Home.",
   );
+  const [stealOpen, setStealOpen] = useState(false);
+
+  const reloadTeams = () => {
+    if (sessionId) fetchTeams(sessionId).then(setTeams).catch(() => {});
+  };
 
   useEffect(() => {
     if (!sessionId) return;
@@ -157,15 +164,161 @@ export default function DuoModePage() {
                   />
                 ))}
               </div>
-              <BalatroButton onClick={handleAutoGenerate} disabled={generating} variant="ghost" size="sm" className="self-start">
-                {generating ? <><Loader2 size={14} className="animate-spin" /> Regenerando...</> : <><Wand2 size={14} /> Refazer Duplas</>}
-              </BalatroButton>
+              <div className="flex gap-3 flex-wrap">
+                <BalatroButton onClick={handleAutoGenerate} disabled={generating} variant="ghost" size="sm">
+                  {generating ? <><Loader2 size={14} className="animate-spin" /> Regenerando...</> : <><Wand2 size={14} /> Refazer Duplas</>}
+                </BalatroButton>
+                <BalatroButton onClick={() => setStealOpen(true)} variant="gold" size="sm">
+                  <Hand size={14} /> Roubar Ponto
+                </BalatroButton>
+              </div>
             </div>
 
             <ActionFeed actions={actions} actionStyle={ACTION_STYLE} />
           </div>
         )}
       </main>
+
+      <StealModal
+        open={stealOpen}
+        onClose={() => setStealOpen(false)}
+        sessionId={sessionId}
+        teams={teams}
+        currentRoundId={currentRoundId}
+        onStolen={reloadTeams}
+      />
     </CRTFrame>
+  );
+}
+
+function StealModal({ open, onClose, sessionId, teams, currentRoundId, onStolen }) {
+  const [holders, setHolders] = useState([]); // alunos com a carta 'roubar'
+  const [roundId, setRoundId] = useState(currentRoundId);
+  const [actorId, setActorId] = useState(null);
+  const [targetTeamId, setTargetTeamId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const [result, setResult] = useState(null);
+
+  useEffect(() => {
+    if (!open || !sessionId) return;
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    Promise.all([
+      getSession(sessionId),
+      currentRoundId ? Promise.resolve([{ id: currentRoundId }]) : listRounds(sessionId),
+    ])
+      .then(([detail, rounds]) => {
+        const withCard = (detail.students ?? []).filter((s) => (s.inventory ?? []).includes("roubar"));
+        setHolders(withCard);
+        setActorId(withCard[0]?.id ?? null);
+        const latest = currentRoundId ?? (rounds.length ? rounds[rounds.length - 1].id : null);
+        setRoundId(latest);
+      })
+      .catch((err) => setError(err.message ?? "Falha ao carregar dados"))
+      .finally(() => setLoading(false));
+  }, [open, sessionId, currentRoundId]);
+
+  const actor = holders.find((h) => h.id === actorId);
+  const actorTeamId = actor?.team_id;
+  const targetableTeams = teams.filter((t) => t.id !== actorTeamId);
+
+  const handleSteal = async () => {
+    if (!roundId || !actorId || !targetTeamId) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await stealPoint(sessionId, roundId, { actorId, targetTeamId });
+      setResult(res);
+      onStolen?.();
+    } catch (err) {
+      setError(err.message ?? "Falha ao roubar ponto");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (!open) return null;
+
+  return (
+    <AnimatePresence>
+      <Motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-6"
+        onClick={onClose}
+      >
+        <Motion.div
+          initial={{ scale: 0.9, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.9, y: 20 }}
+          onClick={(e) => e.stopPropagation()}
+          className="w-full max-w-md rounded-2xl border-4 border-balatro-gold bg-balatro-card p-6 flex flex-col gap-4"
+          style={{ boxShadow: "0 16px 0 #000, 0 24px 48px rgba(240,192,64,0.3)" }}
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="font-pixel text-sm tracking-[0.2em] text-balatro-gold text-glow-gold uppercase flex items-center gap-2">
+              <Hand size={16} /> Roubar Ponto
+            </h2>
+            <button onClick={onClose} className="text-balatro-text-dim hover:text-balatro-red"><X size={18} /></button>
+          </div>
+
+          {loading ? (
+            <p className="font-pixel text-[10px] tracking-[0.2em] text-balatro-text-dim uppercase flex items-center gap-2">
+              <Loader2 size={12} className="animate-spin" /> Carregando...
+            </p>
+          ) : result ? (
+            <div className="flex flex-col gap-3">
+              <p className="font-pixel text-[11px] tracking-[0.15em] text-balatro-green uppercase text-center">
+                ✓ {result.amount} ponto roubado!
+              </p>
+              <div className="flex flex-col gap-1">
+                {result.teams?.map((t) => (
+                  <div key={t.id} className="flex justify-between font-pixel text-[10px] tracking-[0.1em] uppercase text-balatro-text">
+                    <span>{t.name}</span><span className="text-balatro-gold">{t.points}</span>
+                  </div>
+                ))}
+              </div>
+              <BalatroButton onClick={onClose} variant="green" size="sm" className="w-full">Fechar</BalatroButton>
+            </div>
+          ) : !roundId ? (
+            <p className="font-pixel text-[10px] tracking-[0.15em] text-balatro-red uppercase text-center py-4">
+              Nenhuma rodada jogada ainda. Jogue uma rodada antes de roubar.
+            </p>
+          ) : holders.length === 0 ? (
+            <p className="font-pixel text-[10px] tracking-[0.15em] text-balatro-text-dim uppercase text-center py-4">
+              Nenhum aluno possui a carta "roubar". A carta é ganha ao acertar perguntas.
+            </p>
+          ) : (
+            <>
+              <label className="flex flex-col gap-1">
+                <span className="font-pixel text-[9px] tracking-[0.2em] text-balatro-text-dim uppercase">Quem rouba (tem a carta)</span>
+                <select value={actorId ?? ""} onChange={(e) => setActorId(Number(e.target.value))} className="balatro-input">
+                  {holders.map((h) => (
+                    <option key={h.id} value={h.id}>{h.name}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="font-pixel text-[9px] tracking-[0.2em] text-balatro-text-dim uppercase">Roubar da equipe</span>
+                <select value={targetTeamId ?? ""} onChange={(e) => setTargetTeamId(Number(e.target.value))} className="balatro-input">
+                  <option value="">Selecione...</option>
+                  {targetableTeams.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name} ({t.points} pts)</option>
+                  ))}
+                </select>
+              </label>
+              {error && <p className="font-pixel text-[9px] tracking-[0.15em] text-balatro-red uppercase">✗ {error}</p>}
+              <BalatroButton onClick={handleSteal} disabled={!targetTeamId || submitting} variant="gold" size="sm" className="w-full">
+                {submitting ? <><Loader2 size={14} className="animate-spin" /> Roubando...</> : <><Hand size={14} /> Confirmar Roubo</>}
+              </BalatroButton>
+            </>
+          )}
+        </Motion.div>
+      </Motion.div>
+    </AnimatePresence>
   );
 }

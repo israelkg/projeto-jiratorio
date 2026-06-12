@@ -31,3 +31,12 @@ export async function drawPowerup(sessionId, roundId) {
   const { data } = await api.post(`/sessions/${sessionId}/rounds/${roundId}/draw_powerup`);
   return data;
 }
+
+export async function stealPoint(sessionId, roundId, { actorId, targetTeamId, targetStudentId }) {
+  const { data } = await api.post(`/sessions/${sessionId}/rounds/${roundId}/steal_point`, {
+    actor_id: actorId,
+    target_team_id: targetTeamId,
+    target_student_id: targetStudentId,
+  });
+  return data;
+}
