@@ -26,6 +26,7 @@ export default function LoadingPage() {
   const [phase, setPhase] = useState(0);
   const [error, setError] = useState(null);
   const apiDoneRef = useRef(false);
+  const generatedCountRef = useRef(0);
   const navTimeoutRef = useRef(null);
 
   useEffect(() => {
@@ -43,6 +44,7 @@ export default function LoadingPage() {
       .then((data) => {
         if (cancelled) return;
         setResult(data);
+        generatedCountRef.current = data.count ?? 0;
         apiDoneRef.current = true;
       })
       .catch((err) => {
@@ -64,7 +66,7 @@ export default function LoadingPage() {
           clearInterval(interval);
           navTimeoutRef.current = setTimeout(() => {
             clearRequest();
-            navigate("/list");
+            navigate("/list", { state: { generatedCount: generatedCountRef.current } });
           }, 600);
         }
         return next;

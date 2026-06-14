@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 import {
   Home, UserCircle2, ChevronLeft, Pencil, Trash2, Plus, Check, X, BookOpen, Loader2,
@@ -31,8 +31,10 @@ const TYPE_COLOR = {
 
 export default function ListQuestionsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const onHome = () => navigate("/");
   const onBack = () => navigate(-1);
+  const justGenerated = location.state?.generatedCount ?? null;
 
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -177,9 +179,22 @@ export default function ListQuestionsPage() {
             LISTAR PERGUNTAS
           </h1>
           <p className="font-pixel text-[8px] tracking-[0.3em] text-balatro-text-dim uppercase">
-            ◆ {questions.length} perguntas ◆
+            ◆ {questions.length} perguntas na biblioteca ◆
           </p>
         </Motion.div>
+
+        {justGenerated != null && (
+          <Motion.div
+            initial={{ y: -10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="w-full max-w-3xl rounded-lg border-2 border-balatro-green bg-balatro-green/15 px-4 py-2 flex items-center gap-2"
+          >
+            <Check size={14} className="text-balatro-green" />
+            <span className="font-pixel text-[10px] tracking-[0.2em] text-balatro-green uppercase">
+              {justGenerated} perguntas geradas agora — somadas à biblioteca abaixo
+            </span>
+          </Motion.div>
+        )}
 
         {error && (
           <p className="font-pixel text-[10px] tracking-[0.2em] text-balatro-red uppercase">✗ {error}</p>
