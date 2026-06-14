@@ -10,6 +10,7 @@ const RegisterPage         = lazy(() => import("@/pages/RegisterPage"));
 const CreateMatchPage      = lazy(() => import("@/pages/CreateMatchPage"));
 const ImportPage           = lazy(() => import("@/pages/ImportPage"));
 const ImportMaterialPage   = lazy(() => import("@/pages/ImportMaterialPage"));
+const ImportSetupPage      = lazy(() => import("@/pages/ImportSetupPage"));
 const GenerateQuestionsPage = lazy(() => import("@/pages/GenerateQuestionsPage"));
 const ListQuestionsPage    = lazy(() => import("@/pages/ListQuestionsPage"));
 const EditQuestionPage     = lazy(() => import("@/pages/EditQuestionPage"));
@@ -39,6 +40,7 @@ export const PUBLIC_ROUTES = [
 export const PROTECTED_ROUTES = [
   { path: "/",                  label: "Home",                element: HomePage },
   { path: "/create",            label: "Criar Partida",       element: CreateMatchPage },
+  { path: "/import-setup",      label: "Importar Material e Alunos", element: ImportSetupPage },
   { path: "/import",            label: "Importar Alunos",     element: ImportPage },
   { path: "/import-material",   label: "Importar Material",   element: ImportMaterialPage },
   { path: "/generate",          label: "Gerar Perguntas",     element: GenerateQuestionsPage },

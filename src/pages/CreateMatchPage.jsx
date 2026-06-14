@@ -13,7 +13,7 @@ import { useActiveSessionStore } from "@/features/sessions/store/activeSessionSt
 import { cn } from "@/lib/utils";
 
 const MENU_ITEMS = [
-  { id: "import",          icon: Upload,      label: "Importar Material",     suit: "♠", color: "balatro-blue",   to: "/import-material" },
+  { id: "import-setup",    icon: Upload,      label: "Importar Material e Alunos", suit: "♠", color: "balatro-blue",   to: "/import-setup" },
   { id: "generate",        icon: Sparkles,    label: "Gerar Perguntas",       suit: "♦", color: "balatro-blue",   to: "/generate" },
   { id: "list",            icon: ListOrdered, label: "Listar / Editar",       suit: "♣", color: "balatro-green",  to: "/list" },
   { id: "powerups",        icon: Zap,         label: "Power-Ups (%)",         suit: "♥", color: "balatro-gold",   to: "/powerups" },
