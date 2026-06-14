@@ -1,13 +1,13 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 import {
   CloudUpload, Home, UserCircle2, ChevronLeft,
-  FileText, FileSpreadsheet, Presentation, Check, X, Save, Sparkles, Loader2,
+  FileText, FileSpreadsheet, Presentation, Check, X, Save, Sparkles, Loader2, Trash2, Library,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { BalatroButton } from "@/components/balatro/BalatroButton";
-import { uploadMaterial } from "@/features/materials/api";
+import { uploadMaterial, listMaterials, deleteMaterial } from "@/features/materials/api";
 import { cn } from "@/lib/utils";
 
 const ACCEPTED = [".pdf", ".pptx", ".txt", ".csv", ".docx"];
@@ -40,7 +40,30 @@ export default function ImportMaterialPage() {
   const [dragging, setDragging] = useState(false);
   const [entries, setEntries] = useState([]);
   const [error, setError] = useState("");
+  const [saved, setSaved] = useState([]);
+  const [loadingSaved, setLoadingSaved] = useState(true);
   const inputRef = useRef(null);
+
+  const refreshSaved = useCallback(() => {
+    return listMaterials()
+      .then((list) => setSaved(list))
+      .catch(() => {})
+      .finally(() => setLoadingSaved(false));
+  }, []);
+
+  useEffect(() => {
+    refreshSaved();
+  }, [refreshSaved]);
+
+  const removeSaved = async (id) => {
+    if (!window.confirm("Excluir este material?")) return;
+    try {
+      await deleteMaterial(id);
+      setSaved((list) => list.filter((m) => m.id !== id));
+    } catch (err) {
+      setError(err.message ?? "Falha ao excluir material");
+    }
+  };
 
   const addFiles = (incoming) => {
     const valid = [];
@@ -96,6 +119,7 @@ export default function ImportMaterialPage() {
         });
       }
     }
+    refreshSaved();
   };
 
   const pendingCount = entries.filter((e) => e.status === "pending" || e.status === "failed").length;
@@ -266,6 +290,77 @@ export default function ImportMaterialPage() {
             <><Save size={18} /> Enviar Material ({pendingCount})</>
           )}
         </BalatroButton>
+
+        {/* Materiais já importados (persistidos no backend) */}
+        <div className="w-full max-w-2xl flex flex-col gap-3 mt-4">
+          <div className="flex items-center gap-2 border-b-2 border-balatro-card-edge pb-2">
+            <Library size={14} className="text-balatro-purple" />
+            <span className="font-pixel text-[10px] tracking-[0.3em] text-balatro-purple uppercase">
+              Materiais Importados
+            </span>
+            <span className="font-pixel text-[9px] tracking-[0.2em] text-balatro-text-dim uppercase ml-auto">
+              {saved.length}
+            </span>
+          </div>
+
+          {loadingSaved ? (
+            <p className="font-pixel text-[10px] tracking-[0.2em] text-balatro-text-dim uppercase flex items-center gap-2 py-2">
+              <Loader2 size={12} className="animate-spin" /> Carregando...
+            </p>
+          ) : saved.length === 0 ? (
+            <p className="font-pixel text-[9px] tracking-[0.2em] text-balatro-text-dim uppercase py-2">
+              Nenhum material importado ainda.
+            </p>
+          ) : (
+            saved.map((m) => {
+              const cfg = FILE_ICONS[m.kind] ?? FILE_ICONS.txt;
+              const MIcon = cfg.Icon;
+              const statusColor = STATUS_COLOR[m.status] ?? STATUS_COLOR.pending;
+              return (
+                <div
+                  key={m.id}
+                  className="rounded-xl border-2 border-balatro-card-edge bg-balatro-card/80 backdrop-blur-md p-3 flex items-center gap-3"
+                  style={{ boxShadow: "0 6px 0 #000, 0 12px 20px rgba(0,0,0,0.5)" }}
+                >
+                  <div
+                    className="w-11 h-11 rounded-lg border-2 flex items-center justify-center shrink-0"
+                    style={{ borderColor: cfg.color, color: cfg.color, background: `${cfg.color}15` }}
+                  >
+                    <MIcon size={20} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        className="font-pixel text-[8px] tracking-[0.2em] uppercase px-1.5 py-0.5 rounded"
+                        style={{ color: cfg.color, background: `${cfg.color}20` }}
+                      >
+                        {cfg.label}
+                      </span>
+                      <span
+                        className="font-pixel text-[8px] tracking-[0.2em] uppercase px-1.5 py-0.5 rounded"
+                        style={{ color: statusColor, background: `${statusColor}20` }}
+                      >
+                        {m.status}
+                      </span>
+                      <span className="text-sm text-balatro-text font-mono truncate">{m.name}</span>
+                    </div>
+                    {m.preview && (
+                      <p className="text-[10px] text-balatro-text-dim mt-0.5 truncate">{m.preview}</p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeSaved(m.id)}
+                    aria-label="Excluir material"
+                    className="w-8 h-8 rounded-lg border-2 border-balatro-card-edge text-balatro-text-dim hover:border-balatro-red hover:text-balatro-red transition-colors flex items-center justify-center"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              );
+            })
+          )}
+        </div>
       </main>
     </CRTFrame>
   );
