@@ -28,6 +28,7 @@ export default function LoadingPage() {
   const apiDoneRef = useRef(false);
   const generatedCountRef = useRef(0);
   const navTimeoutRef = useRef(null);
+  const startedRef = useRef(false);
 
   useEffect(() => {
     if (!request) {
@@ -35,24 +36,23 @@ export default function LoadingPage() {
       return;
     }
 
-    let cancelled = false;
+    // Guard: evita geração dupla (StrictMode no dev re-executa o effect → 2 chamadas).
+    if (startedRef.current) return;
+    startedRef.current = true;
+
     generateQuestionsFromMaterial(request.materialId, {
       quantity: request.quantity,
       difficulty: request.difficulty,
       types: request.types,
     })
       .then((data) => {
-        if (cancelled) return;
         setResult(data);
         generatedCountRef.current = data.count ?? 0;
         apiDoneRef.current = true;
       })
       .catch((err) => {
-        if (cancelled) return;
         setError(err.message ?? "Falha na geração");
       });
-
-    return () => { cancelled = true; };
   }, [request, setResult, navigate]);
 
   useEffect(() => {
