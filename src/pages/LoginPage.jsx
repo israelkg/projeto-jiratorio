@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, Link, useLocation } from "react-router-dom";
-import { Spade, Eye } from "lucide-react";
+import { Spade, Eye, GraduationCap, Users } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { BalatroButton } from "@/components/balatro/BalatroButton";
 import { loginSchema } from "@/features/auth/schema";
 import { loginRequest, guestRequest } from "@/features/auth/api";
 import { useAuthStore } from "@/features/auth/store/authStore";
+import { cn } from "@/lib/utils";
 
 const GUEST_FALLBACK = {
   token: "guest-demo-token",
@@ -25,6 +26,7 @@ export default function LoginPage() {
   const setSession = useAuthStore((s) => s.setSession);
   const [submitError, setSubmitError] = useState(null);
   const [guestLoading, setGuestLoading] = useState(false);
+  const [mode, setMode] = useState("professor"); // "professor" | "aluno"
 
   const enterAsGuest = async () => {
     setGuestLoading(true);
@@ -76,6 +78,74 @@ export default function LoginPage() {
             </h1>
           </header>
 
+          {/* Abas Professor / Aluno */}
+          <div className="grid grid-cols-2 rounded-xl border-2 border-balatro-card-edge overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setMode("professor")}
+              className={cn(
+                "flex items-center justify-center gap-2 py-3 font-pixel text-[10px] tracking-[0.25em] uppercase transition-all border-b-2",
+                mode === "professor"
+                  ? "bg-balatro-red/20 text-balatro-red text-glow-red border-balatro-red"
+                  : "text-balatro-text-dim border-transparent hover:text-balatro-text hover:bg-white/5",
+              )}
+            >
+              <GraduationCap size={14} /> Professor
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("aluno")}
+              className={cn(
+                "flex items-center justify-center gap-2 py-3 font-pixel text-[10px] tracking-[0.25em] uppercase transition-all border-b-2",
+                mode === "aluno"
+                  ? "bg-balatro-blue/20 text-balatro-blue text-glow-blue border-balatro-blue"
+                  : "text-balatro-text-dim border-transparent hover:text-balatro-text hover:bg-white/5",
+              )}
+            >
+              <Users size={14} /> Aluno
+            </button>
+          </div>
+
+          {mode === "aluno" ? (
+            <div className="flex flex-col gap-5">
+              <div
+                className="rounded-2xl border-2 border-balatro-blue/60 bg-balatro-card/80 p-5 flex flex-col items-center gap-3 text-center"
+                style={{ boxShadow: "0 8px 0 #000, 0 14px 24px rgba(0,157,255,0.2)" }}
+              >
+                <Users size={36} className="text-balatro-blue" />
+                <p className="font-pixel text-[11px] tracking-[0.2em] text-balatro-text uppercase">
+                  Aluno não precisa de conta
+                </p>
+                <p className="text-[12px] text-balatro-text-dim leading-relaxed">
+                  O professor cria a sessão, importa a turma e conduz o jogo na tela.
+                  Você participa respondendo as perguntas na sala — sem login.
+                </p>
+              </div>
+
+              <BalatroButton
+                type="button"
+                variant="blue"
+                size="md"
+                onClick={enterAsGuest}
+                disabled={guestLoading}
+                className="w-full"
+              >
+                <Eye size={16} /> {guestLoading ? "Entrando..." : "Explorar como Visitante"}
+              </BalatroButton>
+
+              <p className="font-pixel text-[10px] tracking-[0.25em] text-balatro-text-dim uppercase text-center">
+                É professor?{" "}
+                <button
+                  type="button"
+                  onClick={() => setMode("professor")}
+                  className="text-balatro-gold hover:underline uppercase"
+                >
+                  Entrar aqui
+                </button>
+              </p>
+            </div>
+          ) : (
+          <>
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
             <Field label="Email" error={errors.email?.message}>
               <input
@@ -140,6 +210,8 @@ export default function LoginPage() {
               Registrar
             </Link>
           </p>
+          </>
+          )}
         </div>
       </main>
     </CRTFrame>
