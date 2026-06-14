@@ -3,11 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 import {
   Home, UserCircle2, ChevronLeft, Pencil, Trash2, Plus, Check, X, BookOpen, Loader2,
+  CheckSquare, Square, ListChecks,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import {
   listQuestions, updateQuestion, deleteQuestion, createQuestion,
 } from "@/features/questions/api";
+import { cn } from "@/lib/utils";
 
 const DIFF = {
   facil:   { color: "#50c878", label: "Fácil" },
@@ -40,6 +42,42 @@ export default function ListQuestionsPage() {
   const [adding, setAdding] = useState(false);
   const [newText, setNewText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+
+  const toggleSelected = (id) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+
+  const selectAll = () => setSelectedIds(new Set(questions.map((q) => q.id)));
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const exitSelectMode = () => { setSelectMode(false); clearSelection(); };
+
+  const deleteSelected = async () => {
+    if (selectedIds.size === 0) return;
+    if (!window.confirm(`Excluir ${selectedIds.size} pergunta(s) selecionada(s)?`)) return;
+    setBusy(true);
+    setError(null);
+    const ids = [...selectedIds];
+    const failed = [];
+    for (const id of ids) {
+      try {
+        await deleteQuestion(id);
+      } catch {
+        failed.push(id);
+      }
+    }
+    const removed = new Set(ids.filter((id) => !failed.includes(id)));
+    setQuestions((qs) => qs.filter((q) => !removed.has(q.id)));
+    setSelectedIds(new Set(failed));
+    if (failed.length) setError(`Falha ao excluir ${failed.length} pergunta(s)`);
+    else setSelectMode(false);
+    setBusy(false);
+  };
 
   useEffect(() => {
     listQuestions()
@@ -147,6 +185,40 @@ export default function ListQuestionsPage() {
           <p className="font-pixel text-[10px] tracking-[0.2em] text-balatro-red uppercase">✗ {error}</p>
         )}
 
+        {!loading && questions.length > 0 && (
+          <div className="w-full max-w-3xl flex items-center justify-between gap-3 flex-wrap">
+            {selectMode ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <ToolbarBtn onClick={selectAll}><CheckSquare size={12} /> Todas</ToolbarBtn>
+                  <ToolbarBtn onClick={clearSelection}><Square size={12} /> Limpar</ToolbarBtn>
+                  <span className="font-pixel text-[10px] tracking-[0.2em] text-balatro-gold uppercase">
+                    {selectedIds.size} selecionada(s)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={deleteSelected}
+                    disabled={selectedIds.size === 0 || busy}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg border-2 border-balatro-red bg-balatro-red/15 text-balatro-red font-pixel text-[9px] tracking-[0.2em] uppercase hover:bg-balatro-red/25 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {busy ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                    Excluir ({selectedIds.size})
+                  </button>
+                  <ToolbarBtn onClick={exitSelectMode}>Cancelar</ToolbarBtn>
+                </div>
+              </>
+            ) : (
+              <button
+                onClick={() => setSelectMode(true)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg border-2 border-balatro-card-edge bg-balatro-bg-deep text-balatro-text-dim hover:text-balatro-text hover:border-balatro-green font-pixel text-[9px] tracking-[0.2em] uppercase transition-colors ml-auto"
+              >
+                <ListChecks size={12} /> Selecionar
+              </button>
+            )}
+          </div>
+        )}
+
         {loading ? (
           <p className="font-pixel text-[10px] tracking-[0.3em] text-balatro-text-dim uppercase flex items-center gap-2">
             <Loader2 size={12} className="animate-spin" /> Carregando...
@@ -162,16 +234,31 @@ export default function ListQuestionsPage() {
               const isEditing = editingId === q.id;
               const diff = DIFF[q.difficulty] ?? { color: "#cbd5e1", label: q.difficulty };
               const typeColor = TYPE_COLOR[q.type] ?? "#cbd5e1";
+              const isSelected = selectedIds.has(q.id);
               return (
                 <Motion.div
                   key={q.id}
                   initial={{ x: -20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.05 + i * 0.03 }}
-                  className="rounded-xl border-2 border-balatro-card-edge bg-balatro-card/80 backdrop-blur-md p-4 hover:border-balatro-green/60 transition-colors"
+                  onClick={selectMode ? () => toggleSelected(q.id) : undefined}
+                  className={cn(
+                    "rounded-xl border-2 backdrop-blur-md p-4 transition-colors",
+                    selectMode && "cursor-pointer",
+                    isSelected
+                      ? "border-balatro-gold bg-balatro-gold/10"
+                      : "border-balatro-card-edge bg-balatro-card/80 hover:border-balatro-green/60",
+                  )}
                   style={{ boxShadow: "0 8px 0 #000, 0 14px 24px rgba(0,0,0,0.5)" }}
                 >
                   <div className="flex items-start gap-3">
+                    {selectMode && (
+                      <div className="shrink-0 pt-0.5">
+                        {isSelected
+                          ? <CheckSquare size={20} className="text-balatro-gold" />
+                          : <Square size={20} className="text-balatro-text-dim" />}
+                      </div>
+                    )}
                     <div className="flex flex-col items-center gap-1 shrink-0">
                       <span className="font-pixel text-base text-balatro-text">#{q.id}</span>
                     </div>
@@ -202,19 +289,21 @@ export default function ListQuestionsPage() {
                         <p className="text-sm text-balatro-text leading-snug">{q.text}</p>
                       )}
                     </div>
-                    <div className="flex flex-col gap-2 shrink-0">
-                      {isEditing ? (
-                        <>
-                          <IconButton onClick={saveEdit} color="#50c878" disabled={busy}><Check size={14} /></IconButton>
-                          <IconButton onClick={() => setEditingId(null)} color="#fe5f55" disabled={busy}><X size={14} /></IconButton>
-                        </>
-                      ) : (
-                        <>
-                          <IconButton onClick={() => startEdit(q)} color="#009dff" disabled={busy}><Pencil size={14} /></IconButton>
-                          <IconButton onClick={() => removeQ(q.id)} color="#fe5f55" disabled={busy}><Trash2 size={14} /></IconButton>
-                        </>
-                      )}
-                    </div>
+                    {!selectMode && (
+                      <div className="flex flex-col gap-2 shrink-0">
+                        {isEditing ? (
+                          <>
+                            <IconButton onClick={saveEdit} color="#50c878" disabled={busy}><Check size={14} /></IconButton>
+                            <IconButton onClick={() => setEditingId(null)} color="#fe5f55" disabled={busy}><X size={14} /></IconButton>
+                          </>
+                        ) : (
+                          <>
+                            <IconButton onClick={() => startEdit(q)} color="#009dff" disabled={busy}><Pencil size={14} /></IconButton>
+                            <IconButton onClick={() => removeQ(q.id)} color="#fe5f55" disabled={busy}><Trash2 size={14} /></IconButton>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </Motion.div>
               );
@@ -266,6 +355,17 @@ export default function ListQuestionsPage() {
         )}
       </main>
     </CRTFrame>
+  );
+}
+
+function ToolbarBtn({ children, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-1.5 px-3 py-2 rounded-lg border-2 border-balatro-card-edge bg-balatro-bg-deep text-balatro-text-dim hover:text-balatro-text hover:border-balatro-green font-pixel text-[9px] tracking-[0.2em] uppercase transition-colors"
+    >
+      {children}
+    </button>
   );
 }
 
