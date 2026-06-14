@@ -2,14 +2,21 @@ import { motion as Motion } from "motion/react";
 import { Crown } from "lucide-react";
 import { useStudentsStore } from "@/features/students/store/studentsStore";
 import { useRoundFlowStore } from "@/features/rounds/store/roundFlowStore";
+import { useActiveSessionStore } from "@/features/sessions/store/activeSessionStore";
 import { cn } from "@/lib/utils";
 
 export function ScoreHUD({ highlightId, className }) {
   const demoStudents = useStudentsStore((s) => s.students);
+  const sessionStudents = useActiveSessionStore((s) => s.students);
   const scoreboard = useRoundFlowStore((s) => s.scoreboard);
-  // Usa placar real do backend quando disponível, senão cai no demo.
-  const students = scoreboard.length > 0 ? scoreboard : demoStudents;
-  const sorted = [...students].sort((a, b) => b.points - a.points);
+  // Prioriza placar ao vivo do backend; senão os alunos reais da sessão; senão demo.
+  const students =
+    scoreboard.length > 0
+      ? scoreboard
+      : sessionStudents.length > 0
+        ? sessionStudents
+        : demoStudents;
+  const sorted = [...students].sort((a, b) => (b.points ?? 0) - (a.points ?? 0));
   const top = sorted[0] ?? { id: null };
 
   return (
