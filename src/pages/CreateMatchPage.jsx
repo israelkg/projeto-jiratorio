@@ -30,6 +30,7 @@ export default function CreateMatchPage() {
   const [error, setError] = useState(null);
   const activeSession = useActiveSessionStore((s) => s.sessionId);
   const sessionName = useActiveSessionStore((s) => s.sessionName);
+  const joinCode = useActiveSessionStore((s) => s.joinCode);
 
   useEffect(() => {
     fetchMatchConfig()
@@ -100,6 +101,16 @@ export default function CreateMatchPage() {
             <p className="font-pixel text-[10px] tracking-[0.3em] text-balatro-green uppercase">
               ◆ Sessão ativa: {sessionName} ◆
             </p>
+          )}
+          {joinCode && (
+            <div className="mt-2 inline-flex flex-col items-center gap-1 rounded-xl border-2 border-balatro-blue bg-balatro-blue/10 px-6 py-3">
+              <span className="font-pixel text-[8px] tracking-[0.3em] text-balatro-text-dim uppercase">
+                Código da turma (alunos entram com ele)
+              </span>
+              <span className="font-pixel text-3xl tracking-[0.4em] text-balatro-blue text-glow-blue">
+                {joinCode}
+              </span>
+            </div>
           )}
         </Motion.div>
 

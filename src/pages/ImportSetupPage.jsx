@@ -105,8 +105,8 @@ function StudentsSection() {
     setSubmitting(true); setError("");
     try {
       const result = await createSessionWithCsv({ name: name.trim(), file });
-      setActiveSession({ id: result.session.id, name: result.session.name, students: result.students });
-      setDoneMsg(`Sessão "${result.session.name}" criada com ${result.imported_count} alunos.`);
+      setActiveSession({ id: result.session.id, name: result.session.name, joinCode: result.session.join_code, students: result.students });
+      setDoneMsg(`Sessão "${result.session.name}" criada com ${result.imported_count} alunos. Código da turma: ${result.session.join_code}`);
     } catch (err) {
       const details = Array.isArray(err.details) ? err.details.join(" · ") : null;
       setError(details ?? err.message ?? "Falha ao importar alunos");

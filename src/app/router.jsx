@@ -7,6 +7,7 @@ import { ProtectedRoute } from "@/features/auth/ProtectedRoute";
 const HomePage             = lazy(() => import("@/pages/HomePage"));
 const LoginPage            = lazy(() => import("@/pages/LoginPage"));
 const RegisterPage         = lazy(() => import("@/pages/RegisterPage"));
+const StudentPlayPage      = lazy(() => import("@/pages/StudentPlayPage"));
 const CreateMatchPage      = lazy(() => import("@/pages/CreateMatchPage"));
 const ImportPage           = lazy(() => import("@/pages/ImportPage"));
 const ImportMaterialPage   = lazy(() => import("@/pages/ImportMaterialPage"));
@@ -35,6 +36,7 @@ const SettingsPage         = lazy(() => import("@/pages/SettingsPage"));
 export const PUBLIC_ROUTES = [
   { path: "/login",    label: "Login",     element: LoginPage },
   { path: "/register", label: "Registrar", element: RegisterPage },
+  { path: "/aluno",    label: "Aluno",     element: StudentPlayPage },
 ];
 
 export const PROTECTED_ROUTES = [

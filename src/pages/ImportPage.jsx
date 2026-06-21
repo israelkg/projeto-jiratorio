@@ -36,6 +36,7 @@ export default function ImportPage() {
       setActiveSession({
         id: result.session.id,
         name: result.session.name,
+        joinCode: result.session.join_code,
         students: result.students,
       });
       navigate("/create");

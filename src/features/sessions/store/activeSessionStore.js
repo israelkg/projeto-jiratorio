@@ -6,14 +6,16 @@ export const useActiveSessionStore = create(
     (set) => ({
       sessionId: null,
       sessionName: null,
+      joinCode: null,
       students: [],
       currentRoundId: null,
       lastDraw: null,
 
-      setSession: ({ id, name, students }) =>
+      setSession: ({ id, name, joinCode, students }) =>
         set({
           sessionId: id,
           sessionName: name,
+          joinCode: joinCode ?? null,
           students: students ?? [],
           currentRoundId: null,
           lastDraw: null,
@@ -29,6 +31,7 @@ export const useActiveSessionStore = create(
         set({
           sessionId: null,
           sessionName: null,
+          joinCode: null,
           students: [],
           currentRoundId: null,
           lastDraw: null,

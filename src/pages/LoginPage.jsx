@@ -8,6 +8,8 @@ import { BalatroButton } from "@/components/balatro/BalatroButton";
 import { loginSchema } from "@/features/auth/schema";
 import { loginRequest, guestRequest } from "@/features/auth/api";
 import { useAuthStore } from "@/features/auth/store/authStore";
+import { joinSession } from "@/features/student/api";
+import { useStudentAuthStore } from "@/features/student/store/studentAuthStore";
 import { cn } from "@/lib/utils";
 
 const GUEST_FALLBACK = {
@@ -24,9 +26,33 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const setSession = useAuthStore((s) => s.setSession);
+  const setStudentSession = useStudentAuthStore((s) => s.setSession);
   const [submitError, setSubmitError] = useState(null);
   const [guestLoading, setGuestLoading] = useState(false);
   const [mode, setMode] = useState("professor"); // "professor" | "aluno"
+
+  const [joinCode, setJoinCode] = useState("");
+  const [joinName, setJoinName] = useState("");
+  const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState(null);
+
+  const enterAsStudent = async () => {
+    setJoinError(null);
+    if (!joinCode.trim() || !joinName.trim()) {
+      setJoinError("Informe o código da turma e seu nome.");
+      return;
+    }
+    setJoining(true);
+    try {
+      const data = await joinSession({ code: joinCode.trim().toUpperCase(), name: joinName.trim() });
+      setStudentSession({ token: data.token, student: data.student, session: data.session });
+      navigate("/aluno", { replace: true });
+    } catch (err) {
+      setJoinError(err.message ?? "Não foi possível entrar na turma");
+    } finally {
+      setJoining(false);
+    }
+  };
 
   const enterAsGuest = async () => {
     setGuestLoading(true);
@@ -108,29 +134,47 @@ export default function LoginPage() {
 
           {mode === "aluno" ? (
             <div className="flex flex-col gap-5">
-              <div
-                className="rounded-2xl border-2 border-balatro-blue/60 bg-balatro-card/80 p-5 flex flex-col items-center gap-3 text-center"
-                style={{ boxShadow: "0 8px 0 #000, 0 14px 24px rgba(0,157,255,0.2)" }}
-              >
-                <Users size={36} className="text-balatro-blue" />
-                <p className="font-pixel text-[11px] tracking-[0.2em] text-balatro-text uppercase">
-                  Aluno não precisa de conta
-                </p>
-                <p className="text-[12px] text-balatro-text-dim leading-relaxed">
-                  O professor cria a sessão, importa a turma e conduz o jogo na tela.
-                  Você participa respondendo as perguntas na sala — sem login.
+              <div className="flex flex-col items-center gap-2 text-center">
+                <Users size={32} className="text-balatro-blue" />
+                <p className="text-[12px] text-balatro-text-dim leading-relaxed max-w-xs">
+                  Digite o código que o professor mostrou na tela e o seu nome para entrar na turma.
                 </p>
               </div>
+
+              <label className="flex flex-col gap-2">
+                <span className="font-pixel text-[10px] tracking-[0.3em] text-balatro-text-dim uppercase">Código da turma</span>
+                <input
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                  placeholder="Ex: ABC123"
+                  maxLength={6}
+                  className="balatro-input text-center tracking-[0.4em] uppercase"
+                />
+              </label>
+
+              <label className="flex flex-col gap-2">
+                <span className="font-pixel text-[10px] tracking-[0.3em] text-balatro-text-dim uppercase">Seu nome</span>
+                <input
+                  value={joinName}
+                  onChange={(e) => setJoinName(e.target.value)}
+                  placeholder="Seu nome"
+                  className="balatro-input"
+                />
+              </label>
+
+              {joinError && (
+                <p className="font-pixel text-[10px] tracking-[0.2em] text-balatro-red uppercase text-center">✗ {joinError}</p>
+              )}
 
               <BalatroButton
                 type="button"
                 variant="blue"
-                size="md"
-                onClick={enterAsGuest}
-                disabled={guestLoading}
+                size="lg"
+                onClick={enterAsStudent}
+                disabled={joining}
                 className="w-full"
               >
-                <Eye size={16} /> {guestLoading ? "Entrando..." : "Explorar como Visitante"}
+                {joining ? "Entrando..." : "Entrar na Turma"}
               </BalatroButton>
 
               <p className="font-pixel text-[10px] tracking-[0.25em] text-balatro-text-dim uppercase text-center">

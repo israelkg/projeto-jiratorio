@@ -36,7 +36,7 @@ export default function LoadSessionPage() {
     setError(null);
     try {
       const detail = await getSession(id);
-      setActiveSession({ id: detail.id, name: detail.name, students: detail.students });
+      setActiveSession({ id: detail.id, name: detail.name, joinCode: detail.join_code, students: detail.students });
       navigate("/create");
     } catch (err) {
       setError(err.message ?? "Falha ao carregar sessão");

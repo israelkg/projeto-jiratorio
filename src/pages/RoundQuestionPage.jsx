@@ -15,7 +15,7 @@ import { ActionButton } from "@/features/round/components/ActionButton";
 import { useRoundStore } from "@/features/round/store/roundStore";
 import { useRoundFlowStore } from "@/features/rounds/store/roundFlowStore";
 import { useActiveSessionStore } from "@/features/sessions/store/activeSessionStore";
-import { createRound, submitRoundResult, drawPowerup } from "@/features/rounds/api";
+import { createRound, submitRoundResult, drawPowerup, getRound } from "@/features/rounds/api";
 
 const POWERUP_LABELS = {
   dica: "Dica", tempo: "Tempo Extra", escudo: "Escudo",
@@ -48,11 +48,25 @@ export default function RoundQuestionPage({ targetScore = 1500 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [puModal, setPuModal] = useState(false);
+  const [studentAnswer, setStudentAnswer] = useState(null);
   const navTimeoutRef = useRef(null);
 
   useEffect(() => () => {
     if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
   }, []);
+
+  // Enquanto a rodada está aberta, consulta a resposta enviada pelo aluno (vítima).
+  useEffect(() => {
+    if (!sessionId || !currentRoundId || lastResult) return undefined;
+    let alive = true;
+    const poll = setInterval(async () => {
+      try {
+        const r = await getRound(sessionId, currentRoundId);
+        if (alive && r.submitted_answer) setStudentAnswer(r.submitted_answer);
+      } catch { /* ignora */ }
+    }, 2500);
+    return () => { alive = false; clearInterval(poll); };
+  }, [sessionId, currentRoundId, lastResult]);
 
   // Sem pergunta selecionada → volta pra grade.
   useEffect(() => {
@@ -248,6 +262,19 @@ export default function RoundQuestionPage({ targetScore = 1500 }) {
             </Motion.button>
           ) : (
             <Timer />
+          )}
+
+          {studentAnswer && !lastResult && (
+            <Motion.div
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="w-full max-w-md rounded-xl border-2 border-balatro-blue bg-balatro-blue/10 px-4 py-3 text-center"
+            >
+              <p className="font-pixel text-[8px] tracking-[0.3em] text-balatro-blue uppercase mb-1">
+                Resposta do aluno (no dispositivo)
+              </p>
+              <p className="text-base text-balatro-text font-mono">{studentAnswer}</p>
+            </Motion.div>
           )}
 
           {reading && !lastResult && (
