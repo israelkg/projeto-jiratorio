@@ -40,3 +40,12 @@ export async function stealPoint(sessionId, roundId, { actorId, targetTeamId, ta
   });
   return data;
 }
+
+export async function usePowerup(sessionId, roundId, { studentId, card, targetStudentId }) {
+  const { data } = await api.post(`/sessions/${sessionId}/rounds/${roundId}/use_powerup`, {
+    student_id: studentId,
+    card,
+    target_student_id: targetStudentId,
+  });
+  return data;
+}
