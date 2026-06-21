@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion as Motion, AnimatePresence } from "motion/react";
 import {
-  Home, UserCircle2, Users, Loader2, AlertTriangle, Wand2, Hand, X,
+  Home, UserCircle2, Users, Loader2, AlertTriangle, Wand2, Hand, X, Play,
   Spade, Heart, Diamond, Club, TrendingUp, TrendingDown, Zap, Star,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
@@ -165,6 +165,9 @@ export default function DuoModePage() {
                 ))}
               </div>
               <div className="flex gap-3 flex-wrap">
+                <BalatroButton onClick={() => navigate("/sort-draw")} variant="green" size="md">
+                  <Play size={16} /> Jogar Rodada
+                </BalatroButton>
                 <BalatroButton onClick={handleAutoGenerate} disabled={generating} variant="ghost" size="sm">
                   {generating ? <><Loader2 size={14} className="animate-spin" /> Regenerando...</> : <><Wand2 size={14} /> Refazer Duplas</>}
                 </BalatroButton>
@@ -172,6 +175,9 @@ export default function DuoModePage() {
                   <Hand size={14} /> Roubar Ponto
                 </BalatroButton>
               </div>
+              <p className="font-pixel text-[8px] tracking-[0.2em] text-balatro-text-dim uppercase">
+                ▸ Cada rodada sorteia um aluno; o ponto vai para a equipe dele.
+              </p>
             </div>
 
             <ActionFeed actions={actions} actionStyle={ACTION_STYLE} />

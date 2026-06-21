@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 import {
-  Home, UserCircle2, Trophy, Zap, Pencil, CheckCircle2,
-  ChevronRight, CheckCircle, XCircle, Volume2, Sparkles, Star,
+  Home, UserCircle2, Trophy, Zap, Users, CheckCircle2,
+  ChevronRight, CheckCircle, XCircle, Volume2, Sparkles, Star, ListOrdered,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { PowerUpModal } from "@/features/round/components/PowerUpModal";
 import { useRoundFlowStore } from "@/features/rounds/store/roundFlowStore";
+import { fetchMatchConfig } from "@/features/match-config/api";
 import { cn } from "@/lib/utils";
 
 const DEMO_HISTORY = [
@@ -26,9 +27,16 @@ const EVENT_STYLE = {
   bonus:      { color: "#009dff", Icon: Star,        label: "BÔNUS" },
 };
 
-const ACTIONS = [
+const ACTIONS_INDIVIDUAL = [
   { id: "powerup",  label: "Ativar Power-Up",   Icon: Zap,           variant: "purple", route: null },
-  { id: "edit",     label: "Editar Rodada",     Icon: Pencil,        variant: "blue",   route: "/edit-question" },
+  { id: "list",     label: "Ver Perguntas",     Icon: ListOrdered,   variant: "blue",   route: "/list" },
+  { id: "finish",   label: "Finalizar Revisão", Icon: CheckCircle2,  variant: "green",  route: "/dashboard" },
+  { id: "next",     label: "Próxima Rodada",    Icon: ChevronRight,  variant: "red",    route: "/sort-draw" },
+];
+
+const ACTIONS_DUPLA = [
+  { id: "powerup",  label: "Ativar Power-Up",   Icon: Zap,           variant: "purple", route: null },
+  { id: "teams",    label: "Placar dos Times",  Icon: Users,         variant: "blue",   route: "/duo-mode" },
   { id: "finish",   label: "Finalizar Revisão", Icon: CheckCircle2,  variant: "green",  route: "/dashboard" },
   { id: "next",     label: "Próxima Rodada",    Icon: ChevronRight,  variant: "red",    route: "/sort-draw" },
 ];
@@ -47,7 +55,13 @@ export default function RoundFinishedPage() {
   const flowHistory = useRoundFlowStore((s) => s.history);
   const roundNumber = useRoundFlowStore((s) => s.roundNumber);
   const nextRound = useRoundFlowStore((s) => s.nextRound);
+  const [mode, setMode] = useState("individual");
 
+  useEffect(() => {
+    fetchMatchConfig().then((c) => setMode(c.mode ?? "individual")).catch(() => {});
+  }, []);
+
+  const ACTIONS = mode === "dupla" ? ACTIONS_DUPLA : ACTIONS_INDIVIDUAL;
   const history = flowHistory.length > 0 ? flowHistory : DEMO_HISTORY;
 
   const handleAction = (action) => {
