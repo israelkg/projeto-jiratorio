@@ -10,7 +10,7 @@ import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { BalatroButton } from "@/components/balatro/BalatroButton";
 import { fetchMatchConfig, updateMatchConfig } from "@/features/match-config/api";
 import { useActiveSessionStore } from "@/features/sessions/store/activeSessionStore";
-import { useTestBots } from "@/features/student/useTestBots";
+import { useBotStore } from "@/features/student/botStore";
 import { cn } from "@/lib/utils";
 
 const MENU_ITEMS = [
@@ -33,13 +33,18 @@ export default function CreateMatchPage() {
   const sessionName = useActiveSessionStore((s) => s.sessionName);
   const joinCode = useActiveSessionStore((s) => s.joinCode);
   const students = useActiveSessionStore((s) => s.students);
-  const bots = useTestBots();
+  const botsActive = useBotStore((s) => s.active);
+  const botsStarting = useBotStore((s) => s.starting);
+  const botsCount = useBotStore((s) => s.count);
+  const botsLastAction = useBotStore((s) => s.lastAction);
+  const startBots = useBotStore((s) => s.start);
+  const stopBots = useBotStore((s) => s.stop);
 
   const toggleBots = () => {
-    if (bots.active) {
-      bots.stop();
+    if (botsActive) {
+      stopBots();
     } else {
-      bots.start(joinCode, students.map((s) => s.name));
+      startBots(joinCode, students.map((s) => s.name));
     }
   };
 
@@ -127,23 +132,23 @@ export default function CreateMatchPage() {
               {/* Alunos de teste: entram e respondem sozinhos (para demonstração). */}
               <button
                 onClick={toggleBots}
-                disabled={bots.starting || students.length === 0}
+                disabled={botsStarting || students.length === 0}
                 className={cn(
                   "inline-flex items-center gap-2 rounded-lg border-2 px-4 py-2 font-pixel text-[9px] tracking-[0.2em] uppercase transition-colors disabled:opacity-50",
-                  bots.active
+                  botsActive
                     ? "border-balatro-red bg-balatro-red/15 text-balatro-red hover:bg-balatro-red/25"
                     : "border-balatro-green bg-balatro-green/15 text-balatro-green hover:bg-balatro-green/25",
                 )}
               >
-                {bots.starting
+                {botsStarting
                   ? <><Loader2 size={12} className="animate-spin" /> Ativando...</>
-                  : bots.active
-                    ? <><Square size={12} /> Parar Alunos de Teste ({bots.count})</>
+                  : botsActive
+                    ? <><Square size={12} /> Parar Alunos de Teste ({botsCount})</>
                     : <><Bot size={12} /> Ativar Alunos de Teste</>}
               </button>
-              {bots.active && bots.lastAction && (
+              {botsActive && botsLastAction && (
                 <p className="font-pixel text-[8px] tracking-[0.15em] text-balatro-text-dim uppercase">
-                  ▸ {bots.lastAction}
+                  ▸ {botsLastAction}
                 </p>
               )}
             </div>

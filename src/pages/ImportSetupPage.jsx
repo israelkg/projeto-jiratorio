@@ -91,6 +91,7 @@ function StudentsSection() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [doneMsg, setDoneMsg] = useState(null);
+  const [importedStudents, setImportedStudents] = useState([]);
   const inputRef = useRef(null);
 
   const pick = (f) => {
@@ -106,6 +107,7 @@ function StudentsSection() {
     try {
       const result = await createSessionWithCsv({ name: name.trim(), file });
       setActiveSession({ id: result.session.id, name: result.session.name, joinCode: result.session.join_code, students: result.students });
+      setImportedStudents(result.students ?? []);
       setDoneMsg(`Sessão "${result.session.name}" criada com ${result.imported_count} alunos. Código da turma: ${result.session.join_code}`);
     } catch (err) {
       const details = Array.isArray(err.details) ? err.details.join(" · ") : null;
@@ -162,6 +164,22 @@ function StudentsSection() {
       <BalatroButton onClick={submit} disabled={!file || submitting} variant="green" size="md" className="self-start">
         {submitting ? <><Loader2 size={16} className="animate-spin" /> Importando...</> : <><CheckCircle2 size={16} /> Importar Alunos</>}
       </BalatroButton>
+
+      {importedStudents.length > 0 && (
+        <div className="flex flex-col gap-2 border-t-2 border-balatro-card-edge pt-3">
+          <span className="font-pixel text-[9px] tracking-[0.2em] text-balatro-text-dim uppercase">
+            Alunos importados ({importedStudents.length})
+          </span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+            {importedStudents.map((s) => (
+              <div key={s.id} className="rounded-lg border-2 border-balatro-card-edge bg-balatro-bg-deep px-3 py-1.5 flex items-center justify-between gap-2">
+                <span className="text-xs text-balatro-text font-mono truncate">{s.name}</span>
+                <span className="font-pixel text-[8px] tracking-[0.15em] text-balatro-text-dim uppercase shrink-0">RA {s.ra}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }
