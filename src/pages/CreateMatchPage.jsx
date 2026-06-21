@@ -4,12 +4,13 @@ import { useNavigate } from "react-router-dom";
 import {
   Home, UserCircle2, Upload, Users, User, Sparkles,
   ListOrdered, Zap, Package, HelpCircle, LayoutList,
-  PlayCircle, ChevronRight, Spade, AlertTriangle,
+  PlayCircle, ChevronRight, Spade, AlertTriangle, Bot, Loader2, Square,
 } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { BalatroButton } from "@/components/balatro/BalatroButton";
 import { fetchMatchConfig, updateMatchConfig } from "@/features/match-config/api";
 import { useActiveSessionStore } from "@/features/sessions/store/activeSessionStore";
+import { useTestBots } from "@/features/student/useTestBots";
 import { cn } from "@/lib/utils";
 
 const MENU_ITEMS = [
@@ -31,6 +32,16 @@ export default function CreateMatchPage() {
   const activeSession = useActiveSessionStore((s) => s.sessionId);
   const sessionName = useActiveSessionStore((s) => s.sessionName);
   const joinCode = useActiveSessionStore((s) => s.joinCode);
+  const students = useActiveSessionStore((s) => s.students);
+  const bots = useTestBots();
+
+  const toggleBots = () => {
+    if (bots.active) {
+      bots.stop();
+    } else {
+      bots.start(joinCode, students.map((s) => s.name));
+    }
+  };
 
   useEffect(() => {
     fetchMatchConfig()
@@ -103,13 +114,38 @@ export default function CreateMatchPage() {
             </p>
           )}
           {joinCode && (
-            <div className="mt-2 inline-flex flex-col items-center gap-1 rounded-xl border-2 border-balatro-blue bg-balatro-blue/10 px-6 py-3">
-              <span className="font-pixel text-[8px] tracking-[0.3em] text-balatro-text-dim uppercase">
-                Código da turma (alunos entram com ele)
-              </span>
-              <span className="font-pixel text-3xl tracking-[0.4em] text-balatro-blue text-glow-blue">
-                {joinCode}
-              </span>
+            <div className="mt-2 flex flex-col items-center gap-3">
+              <div className="inline-flex flex-col items-center gap-1 rounded-xl border-2 border-balatro-blue bg-balatro-blue/10 px-6 py-3">
+                <span className="font-pixel text-[8px] tracking-[0.3em] text-balatro-text-dim uppercase">
+                  Código da turma (alunos entram com ele)
+                </span>
+                <span className="font-pixel text-3xl tracking-[0.4em] text-balatro-blue text-glow-blue">
+                  {joinCode}
+                </span>
+              </div>
+
+              {/* Alunos de teste: entram e respondem sozinhos (para demonstração). */}
+              <button
+                onClick={toggleBots}
+                disabled={bots.starting || students.length === 0}
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-lg border-2 px-4 py-2 font-pixel text-[9px] tracking-[0.2em] uppercase transition-colors disabled:opacity-50",
+                  bots.active
+                    ? "border-balatro-red bg-balatro-red/15 text-balatro-red hover:bg-balatro-red/25"
+                    : "border-balatro-green bg-balatro-green/15 text-balatro-green hover:bg-balatro-green/25",
+                )}
+              >
+                {bots.starting
+                  ? <><Loader2 size={12} className="animate-spin" /> Ativando...</>
+                  : bots.active
+                    ? <><Square size={12} /> Parar Alunos de Teste ({bots.count})</>
+                    : <><Bot size={12} /> Ativar Alunos de Teste</>}
+              </button>
+              {bots.active && bots.lastAction && (
+                <p className="font-pixel text-[8px] tracking-[0.15em] text-balatro-text-dim uppercase">
+                  ▸ {bots.lastAction}
+                </p>
+              )}
             </div>
           )}
         </Motion.div>

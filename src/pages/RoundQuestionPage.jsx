@@ -16,6 +16,7 @@ import { useRoundStore } from "@/features/round/store/roundStore";
 import { useRoundFlowStore } from "@/features/rounds/store/roundFlowStore";
 import { useActiveSessionStore } from "@/features/sessions/store/activeSessionStore";
 import { createRound, submitRoundResult, drawPowerup, getRound } from "@/features/rounds/api";
+import { fetchSessionMetrics } from "@/features/sessions/api";
 
 const POWERUP_LABELS = {
   dica: "Dica", tempo: "Tempo Extra", escudo: "Escudo",
@@ -49,24 +50,45 @@ export default function RoundQuestionPage({ targetScore = 1500 }) {
   const [error, setError] = useState(null);
   const [puModal, setPuModal] = useState(false);
   const [studentAnswer, setStudentAnswer] = useState(null);
+  const [autoGraded, setAutoGraded] = useState(false);
   const navTimeoutRef = useRef(null);
 
   useEffect(() => () => {
     if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
   }, []);
 
-  // Enquanto a rodada está aberta, consulta a resposta enviada pelo aluno (vítima).
+  // Enquanto a rodada está aberta: lê a resposta do aluno e, em perguntas
+  // objetivas, detecta a correção automática feita pelo backend.
   useEffect(() => {
     if (!sessionId || !currentRoundId || lastResult) return undefined;
     let alive = true;
     const poll = setInterval(async () => {
       try {
         const r = await getRound(sessionId, currentRoundId);
-        if (alive && r.submitted_answer) setStudentAnswer(r.submitted_answer);
+        if (!alive) return;
+        if (r.submitted_answer) setStudentAnswer(r.submitted_answer);
+
+        // Pergunta objetiva já corrigida pelo backend.
+        if (r.result && !lastResult) {
+          setAutoGraded(true);
+          setLastResult(r.result);
+          pushHistory({
+            actor: victim?.name ?? "—",
+            event: r.result === "correct" ? "acertou (corrigido automaticamente)" : "errou (corrigido automaticamente)",
+            type: r.result === "correct" ? "correct" : "wrong",
+          });
+          try {
+            const m = await fetchSessionMetrics(sessionId);
+            if (alive) setScoreboard(m.scoreboard);
+          } catch { /* ignora */ }
+          if (r.result === "correct") {
+            navTimeoutRef.current = setTimeout(() => navigate("/round-finished"), 1800);
+          }
+        }
       } catch { /* ignora */ }
-    }, 2500);
+    }, 2000);
     return () => { alive = false; clearInterval(poll); };
-  }, [sessionId, currentRoundId, lastResult]);
+  }, [sessionId, currentRoundId, lastResult, victim, navigate, pushHistory, setLastResult, setScoreboard]);
 
   // Sem pergunta selecionada → volta pra grade.
   useEffect(() => {
@@ -74,6 +96,7 @@ export default function RoundQuestionPage({ targetScore = 1500 }) {
   }, [selectedQuestion, navigate]);
 
   const question = selectedQuestion ?? { text: "—", answer: "—" };
+  const isObjective = ["multipla", "verdadeiro"].includes(selectedQuestion?.type);
   const canUseBackend = Boolean(sessionId && inquisitor?.id && victim?.id && selectedQuestion?.id);
 
   const handleStart = async () => {
@@ -277,11 +300,25 @@ export default function RoundQuestionPage({ targetScore = 1500 }) {
             </Motion.div>
           )}
 
-          {reading && !lastResult && (
+          {reading && !lastResult && isObjective && (
+            <p className="font-pixel text-[9px] tracking-[0.2em] text-balatro-blue uppercase text-center max-w-md flex items-center justify-center gap-2">
+              <Loader2 size={12} className="animate-spin" />
+              Pergunta objetiva — corrige sozinho quando o aluno responder
+            </p>
+          )}
+
+          {reading && !lastResult && !isObjective && (
             <div className="grid grid-cols-2 gap-3 w-full max-w-md">
               <ActionButton onClick={handleCorrect} color="#50c878" Icon={busy ? Loader2 : Check} label="Acertou" />
               <ActionButton onClick={handleWrong} color="#fe5f55" Icon={X} label="Errou" />
             </div>
+          )}
+
+          {autoGraded && (
+            <p className="font-pixel text-[9px] tracking-[0.25em] uppercase text-center"
+               style={{ color: lastResult === "correct" ? "#50c878" : "#fe5f55" }}>
+              ◆ Corrigido automaticamente: {lastResult === "correct" ? "ACERTO" : "ERRO"} ◆
+            </p>
           )}
 
           {lastResult === "wrong" && (
