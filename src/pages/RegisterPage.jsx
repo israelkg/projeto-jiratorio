@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, Link } from "react-router-dom";
-import { Diamond } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 import { CRTFrame } from "@/components/balatro/CRTFrame";
 import { BalatroButton } from "@/components/balatro/BalatroButton";
 import { registerSchema } from "@/features/auth/schema";
@@ -40,13 +40,17 @@ export default function RegisterPage() {
       <main className="relative z-10 min-h-screen flex items-center justify-center px-6 py-10">
         <div className="w-full max-w-md flex flex-col gap-8">
           <header className="flex flex-col items-center gap-3">
-            <Diamond size={42} className="text-balatro-gold" fill="currentColor" />
+            <GraduationCap size={42} className="text-balatro-gold" />
             <p className="font-pixel text-[10px] tracking-[0.4em] text-balatro-gold uppercase">
-              ◆ Criar Conta ◆
+              ◆ Cadastro de Professor ◆
             </p>
             <h1 className="font-pixel text-2xl tracking-[0.25em] text-balatro-text uppercase">
-              Novo Jogador
+              Nova Conta
             </h1>
+            <p className="text-[11px] text-balatro-text-dim text-center leading-relaxed max-w-xs">
+              A conta é do professor, que cria as partidas e conduz o jogo.
+              Os alunos não se cadastram, eles participam pela sessão criada pelo professor.
+            </p>
           </header>
 
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
@@ -103,7 +107,7 @@ export default function RegisterPage() {
               disabled={isSubmitting}
               className="w-full mt-2"
             >
-              {isSubmitting ? "Criando..." : "Registrar"}
+              {isSubmitting ? "Criando..." : "Criar Conta de Professor"}
             </BalatroButton>
           </form>
 
